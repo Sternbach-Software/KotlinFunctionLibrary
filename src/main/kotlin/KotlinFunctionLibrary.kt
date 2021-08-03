@@ -917,6 +917,19 @@ println("workingList2=$workingList2")*/
         }
     }
 
+    /**
+     * A small method to do primitive warming up of the JVM.
+     * */
+    fun warmUpJVM() {
+        val sb = StringBuilder()
+        var d = 0.0
+        while (d < 1000000) {
+            sb.append(d * (.00001 / 8)) //to "warm up" the JVM
+            d++
+        }
+    }
+
+
     @JvmStatic
     fun main(args: Array<String>) {
         println("KotlinFunctionLibrary v2.1.0")
