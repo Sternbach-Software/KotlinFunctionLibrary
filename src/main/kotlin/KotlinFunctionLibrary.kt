@@ -17,7 +17,7 @@ import kotlin.system.measureNanoTime
 
 
 /**
- * Library of Kotlin utility functions. Version: 2.0.4
+ * Library of Kotlin utility functions. Version: 2.1.0
  * */
 @Suppress("UNUSED")
 object KotlinFunctionLibrary{
@@ -901,8 +901,24 @@ println("workingList2=$workingList2")*/
         return null
     }
 
+    fun <T> Iterable<T>.toFrequencyMap(): Map<T,Int>{
+        val frequencies: MutableMap<T, Int> = mutableMapOf()
+        this.forEach{ frequencies[it] = frequencies.getOrDefault(it, 0) + 1 }
+        return frequencies
+    }
+
+    /**
+     * Returns a list which contains a copy of [this] [n] times: e.g. listOf(1,2,3).multiplyBy(3){it+1} == listOf(1,2,3, 2,3,4, 2,3,4)
+     * */
+    fun <E> MutableList<E>.multiplyListBy(n: Int, transform: (E) -> E): MutableList<E> {
+        return also {
+            val original = it.toList()
+            (1 until n).forEach { i -> it.addAll(original.map { it1 -> transform(it1) }) }
+        }
+    }
+
     @JvmStatic
     fun main(args: Array<String>) {
-        println("KotlinFunctionLibrary v2.0.4")
+        println("KotlinFunctionLibrary v2.1.0")
     }
 }
