@@ -929,6 +929,16 @@ println("workingList2=$workingList2")*/
         }
     }
 
+    /**
+     * Turns a number into an ordinal string representation (e.g. 4.toOrdinalNumber()== "4th"
+     * */
+    fun Int.toOrdinalNumber(): String {
+        val suffixes = arrayOf("th", "st", "nd", "rd", "th", "th", "th", "th", "th", "th")
+        return when (this % 100) {
+            11, 12, 13 -> "${this}th"
+            else -> this.toString() + suffixes[this % 10]
+        }
+    }
 
     @JvmStatic
     fun main(args: Array<String>) {
