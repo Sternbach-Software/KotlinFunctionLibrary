@@ -944,30 +944,29 @@ println("workingList2=$workingList2")*/
      * Recurses through a list of a recursive elements to find the element which matches [predicate] by selecting the next list using [recursiveSelector]
      * For example, given class Foo(val a: Char, val b: List<Foo>)
      * val list = listOf(
-    Foo('a',
-    listOf(
-    Foo('b',
-    listOf(
-    Foo('c',
-    listOf()
-    )
-    )
-    ),
-    Foo(
-    'd',
-    listOf(
-    Foo('e',
-    listOf(
-    Foo('f',
-    listOf()
-    )
-    )
-    )
-    )
-    )
-    )
-    )
-    )
+                        Foo('a',
+                            listOf(
+                                Foo('b',
+                                    listOf(
+                                        Foo('c',
+                                            listOf()
+                                        )
+                                    )
+                                ),
+                                Foo('d',
+                                    listOf(
+                                        Foo('e',
+                                            listOf(
+                                                Foo('f',
+                                                    listOf()
+                                                )
+                                            )
+                                        )
+                                    )
+                                )
+                            )
+                        )
+                    )
     list.deepFind({ it.a == 'z' }) { it.b } != null == false
     list.deepFind({ it.a == 'a' }) { it.b } != null == true
     list.deepFind({ it.a == 'f' }) { it.b } != null == true
