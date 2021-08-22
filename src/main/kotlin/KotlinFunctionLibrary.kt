@@ -17,7 +17,7 @@ import kotlin.system.measureNanoTime
 
 
 /**
- * Library of Kotlin utility functions. Version: 2.1.0
+ * Library of Kotlin utility functions. Version: 3.0.0
  * */
 @Suppress("UNUSED")
 object KotlinFunctionLibrary{
