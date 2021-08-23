@@ -941,7 +941,7 @@ println("workingList2=$workingList2")*/
     }
 
     /**
-     * Recurses through a list of a recursive elements to find the element which matches [predicate] by selecting the next list using [recursiveSelector]
+     * A version of List.find() for recursive data structures. Recurses through a list of a recursive elements to find the element which matches [predicate] by selecting the next list using [recursiveSelector]
      * For example, given class Foo(val a: Char, val b: List<Foo>)
      * val list = listOf(
                         Foo('a',
@@ -971,11 +971,11 @@ println("workingList2=$workingList2")*/
     list.deepFind({ it.a == 'a' }) { it.b } != null == true
     list.deepFind({ it.a == 'f' }) { it.b } != null == true
      * */
-    fun <E> List<E>.deepFind(predicate: (E) -> Boolean, recursiveSelector: (E) -> List<E>): E? {
+    fun <E> List<E>.recursiveFind(predicate: (E) -> Boolean, recursiveSelector: (E) -> List<E>): E? {
         var find = find(predicate)//check this layer
         if(find != null) return find
         for(element in this){
-            find = recursiveSelector(element).deepFind(predicate, recursiveSelector)//check the next layer
+            find = recursiveSelector(element).recursiveFind(predicate, recursiveSelector)//check the next layer
             if(find != null) return find
         }
         return null
@@ -983,6 +983,6 @@ println("workingList2=$workingList2")*/
 
     @JvmStatic
     fun main(args: Array<String>) {
-        println("KotlinFunctionLibrary v2.1.0")
+        println("KotlinFunctionLibrary v3.0.0")
     }
 }
