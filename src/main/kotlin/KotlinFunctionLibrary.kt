@@ -137,7 +137,7 @@ object KotlinFunctionLibrary{
      * */
     fun measureNanoTimeAndPrintWithoutReturningResult(
         inSeconds: Boolean = false,
-        message: String = if (inSeconds) "Time to complete: %d seconds" else "Time to complete: %d nanoseconds",
+        message: String = if (inSeconds) "Time to complete: %f seconds" else "Time to complete: %d nanoseconds",
         block: () -> Unit
     ) {
         val timeToComplete = measureNanoTime(block)
@@ -153,7 +153,7 @@ object KotlinFunctionLibrary{
      * */
     fun <T> measureNanoTimeAndPrintAndReturnResult(
         inSeconds: Boolean = false,
-        message: String = if (inSeconds) "Time to complete: %d seconds" else "Time to complete: %d nanoseconds",
+        message: String = if (inSeconds) "Time to complete: %f seconds" else "Time to complete: %d nanoseconds",
         block: () -> T
     ): T {
         var result: T
