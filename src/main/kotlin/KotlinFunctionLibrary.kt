@@ -241,13 +241,15 @@ object KotlinFunctionLibrary{
     /**
      * Takes a [Triple] of <hour,minute,second> and returns either e.g. "05:32:15", or "5 hr 32 min 15 sec"
      * */
-    fun Triple<Int, Int, Int>.formatted(withColons: Boolean) =
-        if (withColons) "${if(this.first.toString().length==1) "0${this.first}" else "${this.first}"}:${this.second}:${this.third}"
+    fun Triple<Int, Int, Int>.formatted(withColons: Boolean): String {
+        fun Int.formatted() = if (this < 10) "0$this" else this.toString()
+        return if (withColons) "${this.first.formatted()}:${this.second.formatted()}:${this.third.formatted()}"
         else timeFormattedConcisely(
             this.first,
             this.second,
             this.third
         )
+    }
 
     /**
      * Takes an hour, minute, and second, and will return a string with only those values which are not equal to 0 (e.g. "5 hr 15 sec", "5 hr 32 min 15 sec")
