@@ -259,7 +259,7 @@ object KotlinFunctionLibrary{
         if (hour != 0) string.append("$hour hr ")
         if (minute != 0) string.append("$minute min ")
         if (second != 0) string.append("$second sec")
-        return string.toString().trim()
+        return if(string.isEmpty()) "0 sec" else string.toString().trim()
     }
 
     fun toSeconds(hour: Int, minute: Int, second: Int) =
