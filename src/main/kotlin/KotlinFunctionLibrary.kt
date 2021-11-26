@@ -239,16 +239,26 @@ object KotlinFunctionLibrary{
         return if (matcher.find()) matcher.start() else -1
     }
     /**
-     * Takes a [Triple] of <hour,minute,second> and returns either e.g. "05:32:15", or "5 hr 32 min 15 sec"
+     * Takes a [Triple] of <hour,minute,second> and returns either e.g. "05:32:15", or "5 hr 32 min 15 sec".
+     * Valid outputs: 12:34, 00:12, 00:00, 1:00:00, 1:12:00
+     * Invalid outputs: "00:00:00", "00:01:00", "1:5:3"
      * */
     fun Triple<Int, Int, Int>.formatted(withColons: Boolean): String {
-        fun Int.formatted() = if (this < 10) "0$this" else this.toString()
-        return if (withColons) "${this.first.formatted()}:${this.second.formatted()}:${this.third.formatted()}"
-        else timeFormattedConcisely(
-            this.first,
-            this.second,
-            this.third
-        )
+        fun Int.formatted() = when {
+            this == 0 -> "00"
+            this < 10 -> "0$this"
+            else -> this.toString()
+        }
+        return if (withColons) {
+            val string = when {
+                first == 0 && second > 0 -> "$second:"
+                first > 0 -> "$first:${second.formatted()}:"
+                second == 0 -> "00:"
+                else -> TODO("Should not have happened. this=$this") //how beautiful! Also deals with first == 0 && second == 0
+            }
+            string + third.formatted()
+        }
+        else timeFormattedConcisely(first, second, third)
     }
 
     /**
