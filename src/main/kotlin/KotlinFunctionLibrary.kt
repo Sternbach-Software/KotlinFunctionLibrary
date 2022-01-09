@@ -983,15 +983,14 @@ println("workingList2=$workingList2")*/
     list.deepFind({ it.a == 'a' }) { it.b } != null == true
     list.deepFind({ it.a == 'f' }) { it.b } != null == true
      * */
-    fun <E> List<E>.recursiveFind(predicate: (E) -> Boolean, recursiveSelector: (E) -> List<E>): E? {
-        var find = find(predicate)//check this layer
-        if(find != null) return find
-        for(element in this){
-            find = recursiveSelector(element).recursiveFind(predicate, recursiveSelector)//check the next layer
-            if(find != null) return find
-        }
-        return null
-    }
+   fun​ <​E​> List<E>.​recursiveFind​(​predicate​:​ (​E​) ​->​ ​Boolean​, ​recursiveSelector​:​ (​E​) ​->​ ​List​<​E​>): ​E​?​ { 
+  ​     for​(element ​in​ ​this​){ 
+           if(predicate(element)) return element
+  ​         val find ​=​ recursiveSelector(element).recursiveFind(predicate, recursiveSelector)​//​check the next layer 
+  ​         if​(find ​!=​ ​null​) ​return​ find 
+  ​     } 
+  ​     ​return​ ​null 
+  ​  }
 
     @JvmStatic
     fun main(args: Array<String>) {
