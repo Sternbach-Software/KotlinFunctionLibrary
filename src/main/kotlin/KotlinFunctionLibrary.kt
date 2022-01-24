@@ -20,7 +20,7 @@ import kotlin.system.measureNanoTime
  * Library of Kotlin utility functions. Version: 3.0.0
  * */
 @Suppress("UNUSED")
-object KotlinFunctionLibrary{
+object KotlinFunctionLibrary {
     const val WINDOWS_DIRECTORY_REGEX = "[a-zA-Z]:\\\\(((?![<>:\"/\\\\|?*]).)+((?<![ .])\\\\)?)*"
     const val WINDOWS_FILENAME_REGEX =
         "(?!^(PRN|AUX|CLOCK$|NUL|CON|COM\\d|LPT\\d|\\..*)(\\..+)?$)[^\\x00-\\x1f\\\\<>:\"/|?*;]+"
@@ -37,7 +37,7 @@ object KotlinFunctionLibrary{
     /**
      * Lambda to generate a random word of size [wordLength]
      * */
-    val randomWord = { wordLength:Int ->
+    val randomWord = { wordLength: Int ->
         (1..wordLength)
             .map { (('A'..'Z') + ('a'..'z')).random() }
             .joinToString("")
@@ -46,7 +46,7 @@ object KotlinFunctionLibrary{
     /**
      * Lambda to generate a list of size [numWords] containing random words of size [wordLength]
      * */
-    val listOfRandomWords = {numWords:Int, wordLength:Int->
+    val listOfRandomWords = { numWords: Int, wordLength: Int ->
         val randomListOfWords = mutableListOf<String>()
         for (i in 1..numWords) randomListOfWords.add(randomWord(wordLength))
         randomListOfWords
@@ -141,7 +141,7 @@ object KotlinFunctionLibrary{
         block: () -> Unit
     ) {
         val timeToComplete = measureNanoTime(block)
-        System.out.printf(message, if(inSeconds) timeToComplete / 1_000_000_000.00 else timeToComplete)
+        System.out.printf(message, if (inSeconds) timeToComplete / 1_000_000_000.00 else timeToComplete)
     }
 
     /**
@@ -158,7 +158,7 @@ object KotlinFunctionLibrary{
     ): T {
         var result: T
         val timeToComplete = measureNanoTime { result = block() }
-        System.out.printf(message, if(inSeconds) timeToComplete / 1_000_000_000.00 else timeToComplete)
+        System.out.printf(message, if (inSeconds) timeToComplete / 1_000_000_000.00 else timeToComplete)
         return result
     }
 
@@ -238,6 +238,7 @@ object KotlinFunctionLibrary{
         val matcher: Matcher = pattern.matcher(toString())
         return if (matcher.find()) matcher.start() else -1
     }
+
     /**
      * Takes a [Triple] of <hour,minute,second> and returns either e.g. "05:32:15", or "5 hr 32 min 15 sec".
      * Valid outputs: 12:34, 00:12, 00:00, 1:00:00, 1:12:00
@@ -257,8 +258,7 @@ object KotlinFunctionLibrary{
                 else -> TODO("Should not have happened. this=$this") //how beautiful! Also deals with first == 0 && second == 0
             }
             string + third.formatted()
-        }
-        else timeFormattedConcisely(first, second, third)
+        } else timeFormattedConcisely(first, second, third)
     }
 
     /**
@@ -269,7 +269,7 @@ object KotlinFunctionLibrary{
         if (hour != 0) string.append("$hour hr ")
         if (minute != 0) string.append("$minute min ")
         if (second != 0) string.append("$second sec")
-        return if(string.isEmpty()) "0 sec" else string.toString().trim()
+        return if (string.isEmpty()) "0 sec" else string.toString().trim()
     }
 
     fun toSeconds(hour: Int, minute: Int, second: Int) =
@@ -327,9 +327,11 @@ object KotlinFunctionLibrary{
         workingList.sortWith(compareBy)*/
         //optimized version:
 
-        val size = requireNotEmptyAndSameSize(ascending, sortCriteria,"List of ascending/descending must not be empty",
+        val size = requireNotEmptyAndSameSize(
+            ascending, sortCriteria, "List of ascending/descending must not be empty",
             "List of sort criteria must not be empty",
-            "Each sort criteria must be matched with a ascending/descending boolean; size of ascending/descending list: %d, Size of sort criteria list: %d ")
+            "Each sort criteria must be matched with a ascending/descending boolean; size of ascending/descending list: %d, Size of sort criteria list: %d "
+        )
 
         workingList.sortWith(
             PRIVATEgetComparator(
@@ -357,9 +359,11 @@ object KotlinFunctionLibrary{
         sortCriteria: List<KProperty1<T, Comparable<Any>?>>,
         ascending: List<Boolean>
     ) {
-        val size = requireNotEmptyAndSameSize(ascending, sortCriteria,"List of ascending/descending must not be empty",
+        val size = requireNotEmptyAndSameSize(
+            ascending, sortCriteria, "List of ascending/descending must not be empty",
             "List of sort criteria must not be empty",
-            "Each sort criteria must be matched with a ascending/descending boolean; size of ascending/descending list: %d, Size of sort criteria list: %d ")
+            "Each sort criteria must be matched with a ascending/descending boolean; size of ascending/descending list: %d, Size of sort criteria list: %d "
+        )
         workingList.sortWith(
             PRIVATEgetComparator(
                 ascending,
@@ -369,12 +373,13 @@ object KotlinFunctionLibrary{
             )
         )
     }
+
     /**
      * Wrapper to {@link sort(MutableList<T>,List<KProperty1<T, Comparable<Any>?>>,List<Boolean>)} using [Map] for a more convenient API
      * */
     inline fun <reified T> sort(
         workingList: MutableList<T>,
-        sortCriteriaMappedToAscending: Map<KProperty1<T, Comparable<Any>?>,Boolean>
+        sortCriteriaMappedToAscending: Map<KProperty1<T, Comparable<Any>?>, Boolean>
     ) = sort(workingList, sortCriteriaMappedToAscending.keys.toList(), sortCriteriaMappedToAscending.values.toList())
 
     /**
@@ -383,8 +388,12 @@ object KotlinFunctionLibrary{
     @JvmName("sortWithClassParameterStrings")
     inline fun <reified T> sort(
         workingList: MutableList<T>,
-        sortCriteriaMappedToAscending: Map<String,Boolean>
-    ) = sort(workingList, sortCriteriaMappedToAscending.keys.toMutableList(), sortCriteriaMappedToAscending.values.toList())
+        sortCriteriaMappedToAscending: Map<String, Boolean>
+    ) = sort(
+        workingList,
+        sortCriteriaMappedToAscending.keys.toMutableList(),
+        sortCriteriaMappedToAscending.values.toList()
+    )
 
     /**
      * Wrapper to {@link sort(MutableList<T>,List<KProperty1<T, Comparable<Any>?>>,List<Boolean>)} using [Map] for a more convenient API
@@ -401,6 +410,7 @@ object KotlinFunctionLibrary{
     inline fun <reified T> MutableList<T>.sort(
         map: Map<String, Boolean>
     ) = sort(this, map.keys.toMutableList(), map.values.toList())
+
     /**
      * Takes two lists and throws an [IllegalArgumentException] if either of the lists are empty or if they are different sizes.
      * @param aEmptyMessage message to be printed if [listA] is empty; optionally use "%d" as a template/placeholder for the size of [listA]
@@ -414,13 +424,13 @@ object KotlinFunctionLibrary{
         aEmptyMessage: String = "List A is empty.",
         bEmptyMessage: String = "List B is empty.",
         notSameSizeMessage: String = "Lists are not same size; List A is size %d, List B is size %d."
-    ): Pair<Int,Int> {
+    ): Pair<Int, Int> {
         val sizeA = listA.size
         val sizeB = listB.size
-        require(sizeA > 0) { System.out.printf(aEmptyMessage,sizeA) }
-        require(sizeB > 0) { System.out.printf(bEmptyMessage,sizeB) }
-        require(sizeB == sizeA) { System.out.printf(notSameSizeMessage,  sizeA, sizeB) }
-        return Pair(sizeA,sizeB)
+        require(sizeA > 0) { System.out.printf(aEmptyMessage, sizeA) }
+        require(sizeB > 0) { System.out.printf(bEmptyMessage, sizeB) }
+        require(sizeB == sizeA) { System.out.printf(notSameSizeMessage, sizeA, sizeB) }
+        return Pair(sizeA, sizeB)
     }
 
     /**
@@ -434,7 +444,8 @@ object KotlinFunctionLibrary{
      * Would make explicitly private but Kotlin throws an error
 
      * */
-    @PublishedApi internal inline fun <reified T> PRIVATEgetComparator(
+    @PublishedApi
+    internal inline fun <reified T> PRIVATEgetComparator(
         ascending: List<Boolean>,
         firstSelector: KProperty1<T, Comparable<Any>?>,
         sortCriteria: List<String>,
@@ -461,7 +472,8 @@ object KotlinFunctionLibrary{
      * Would make explicitly private but doing so would violate Kotlin access restrictions
      * */
     @JvmName("comparatorWithExplicitKPropertylist")
-    @PublishedApi internal fun <T> PRIVATEgetComparator(
+    @PublishedApi
+    internal fun <T> PRIVATEgetComparator(
         ascending: List<Boolean>,
         firstSelector: KProperty1<T, Comparable<Any>?>,
         sortCriteria: List<KProperty1<T, Comparable<Any>?>>,
@@ -483,7 +495,8 @@ object KotlinFunctionLibrary{
      * Would make explicitly private but doing so would violate Kotlin access restrictions
      * @return null if no parameter was found
      * */
-    @PublishedApi internal inline fun <reified T> PRIVATEgetPropertyToSortBy(
+    @PublishedApi
+    internal inline fun <reified T> PRIVATEgetPropertyToSortBy(
         sortCriterion: String
     ): KProperty1<T, Comparable<Any>?> =
         (T::class as KClass<*>).memberProperties.find { it.name == sortCriterion } as KProperty1<T, Comparable<Any>?>?
@@ -678,18 +691,19 @@ println("workingList2=$workingList2")*/
      * */
     fun File.createFile(overwrite: Boolean = false): File {
         if (overwrite && exists()) {
-            if(isDirectory) deleteRecursively().println("${this.name} deleted recursively.")
+            if (isDirectory) deleteRecursively().println("${this.name} deleted recursively.")
             else delete().println("${this.name} deleted.")
         }
         createNewFile()
         return this //to allow for functional programming/ chaining calls
     }
+
     /**
      * Creates a folder if non-existant, or overwrites it if [overwrite] is true
      * */
-    fun File.createFolder(createParentFolders:Boolean = false, overwrite: Boolean = false): File {
+    fun File.createFolder(createParentFolders: Boolean = false, overwrite: Boolean = false): File {
         if (overwrite && exists()) deleteRecursively()
-        if(createParentFolders) mkdirs() else mkdir()
+        if (createParentFolders) mkdirs() else mkdir()
         return this //to allow for functional programming/ chaining calls
     }
 
@@ -730,7 +744,7 @@ println("workingList2=$workingList2")*/
      * @return the result of the lambda [action]
      * */
     fun <R> File.performRead(action: (BufferedReader) -> R): R {
-        val r:R
+        val r: R
         val reader = bufferedReader()
         r = action(reader)
         reader.close()
@@ -743,7 +757,7 @@ println("workingList2=$workingList2")*/
 
      * */
     fun String.appendIf(append: String, predicate: (String) -> Boolean): String {
-        return if(predicate(this)) this + append else this
+        return if (predicate(this)) this + append else this
     }
 
     /**
@@ -752,19 +766,21 @@ println("workingList2=$workingList2")*/
 
      * */
     fun String.appendIf(append: String, `else`: String, predicate: (String) -> Boolean): String {
-        return if(predicate(this)) this + append else this + `else`
+        return if (predicate(this)) this + append else this + `else`
     }
 
-    fun <T> myBuildList(capacity:Int, action: () -> T): List<T> {
+    fun <T> myBuildList(capacity: Int, action: () -> T): List<T> {
         val list = mutableListOf<T>()
-        for(i in 0 until capacity) list.add(action())
+        for (i in 0 until capacity) list.add(action())
         return list.toList()
     }
-    fun <T> myBuildMutableList(capacity:Int, action: () -> T): MutableList<T> {
+
+    fun <T> myBuildMutableList(capacity: Int, action: () -> T): MutableList<T> {
         val list = mutableListOf<T>()
-        for(i in 0 until capacity) list.add(action())
+        for (i in 0 until capacity) list.add(action())
         return list
     }
+
     /**
      * Returns whether the given CharSequence contains only digits.
      */
@@ -783,7 +799,7 @@ println("workingList2=$workingList2")*/
 
     fun String.substringBetween(str1: String, str2: String): String {
         val index1 = indexOf(str1)
-        return substring(index1 + str1.length, indexOf(str2,index1))
+        return substring(index1 + str1.length, indexOf(str2, index1))
     }
 
     /**
@@ -796,54 +812,71 @@ println("workingList2=$workingList2")*/
      *     eliminating the need to find the index again. The flow of calls to substring() were intended to start with
      *     this function and then continue with {@link #substring(Int, String)}
      * */
-    fun String.substringBetween(str1: String, str2: String, returnIndicesFromStartOfString: Boolean):Triple<String, Int, Int> {
-        require(this.isNotBlank()){"The string passed to subStringBetween as `this` was empty. params: \"$this\".substringBetween(\"$str1\", \"$str2\", \"$returnIndicesFromStartOfString\")"}
+    fun String.substringBetween(
+        str1: String,
+        str2: String,
+        returnIndicesFromStartOfString: Boolean
+    ): Triple<String, Int, Int> {
+        require(this.isNotBlank()) { "The string passed to subStringBetween as `this` was empty. params: \"$this\".substringBetween(\"$str1\", \"$str2\", \"$returnIndicesFromStartOfString\")" }
         val index1 = indexOf(str1)
-        if(index1 < 0) throw StringIndexOutOfBoundsException("String 1 (\"$str1\") was not found in \"$this\".")
-        val index2 =  indexOf(str2,index1)
-        if(index2 < 0) throw StringIndexOutOfBoundsException("String 2 (\"$str2\") was not found in \"$this\".")
+        if (index1 < 0) throw StringIndexOutOfBoundsException("String 1 (\"$str1\") was not found in \"$this\".")
+        val index2 = indexOf(str2, index1)
+        if (index2 < 0) throw StringIndexOutOfBoundsException("String 2 (\"$str2\") was not found in \"$this\".")
         val indexOfEndOfFirstWord = index1 + str1.length
 //        println("this=$this,str1=$str1,str2=$str2")
 //        println("index1=$index1,index2=$index2")
-        val str = substring(indexOfEndOfFirstWord,index2)
-        return Triple(str, if(returnIndicesFromStartOfString) index1  else indexOfEndOfFirstWord, if(returnIndicesFromStartOfString) index2 else index2 + str2.length)
+        val str = substring(indexOfEndOfFirstWord, index2)
+        return Triple(
+            str,
+            if (returnIndicesFromStartOfString) index1 else indexOfEndOfFirstWord,
+            if (returnIndicesFromStartOfString) index2 else index2 + str2.length
+        )
     }
 
     /**
      * Returns the substring between [startIndex] and the next occurence of [endString] after [startIndex]
      * @return [Pair]<abovementioned substring, index of [endString]>
      * */
-    fun String.substring(startIndex:Int, endString: String): Pair<String,Int>{
+    fun String.substring(startIndex: Int, endString: String): Pair<String, Int> {
         val endIndex = indexOf(endString, startIndex)
-        return Pair(substring(startIndex,endIndex), endIndex)
+        return Pair(substring(startIndex, endIndex), endIndex)
     }
+
     /**
      * Returns the substring between [startIndex] and the next occurence of [endString] after [startIndex]
      * @return [Pair]<abovementioned substring, index of [endString]>
      * */
-    fun String.substring(startIndex:Int, endString: String, returnIndexFromStartOfFoundString: Boolean): Pair<String,Int>{
+    fun String.substring(
+        startIndex: Int,
+        endString: String,
+        returnIndexFromStartOfFoundString: Boolean
+    ): Pair<String, Int> {
         val endIndex = indexOf(endString, startIndex)
-        return Pair(substring(startIndex,endIndex), if(returnIndexFromStartOfFoundString) endIndex else endIndex + endString.length)
+        return Pair(
+            substring(startIndex, endIndex),
+            if (returnIndexFromStartOfFoundString) endIndex else endIndex + endString.length
+        )
     }
 
-    fun toLookBehindMatchAhead(behind:String, match:String, ahead:String): Regex{
+    fun toLookBehindMatchAhead(behind: String, match: String, ahead: String): Regex {
         return "(?<=$behind)$match(?=$ahead)".toRegex()
     }
+
     /**
      * Takes a string of the form \"look_behind~~match~~look_ahead\" and returns a [Regex] with that form (after removing the ~~)
      * */
-    fun String.toLookBehindMatchAhead(escapeIllegalCharacters: Boolean = true): Regex{
-        require(count{it=='~'}==4)
-        var (behind,match,ahead) = split("~~")
-        fun String.escapeIllegalCharacters(): String{
+    fun String.toLookBehindMatchAhead(escapeIllegalCharacters: Boolean = true): Regex {
+        require(count { it == '~' } == 4)
+        var (behind, match, ahead) = split("~~")
+        fun String.escapeIllegalCharacters(): String {
             var temp = this
-            fun replaceIfContains(vararg strings: String){
-                for(string in strings) if(temp.contains(string)) temp = temp.replace(string,"\\$string")
+            fun replaceIfContains(vararg strings: String) {
+                for (string in strings) if (temp.contains(string)) temp = temp.replace(string, "\\$string")
             }
-            replaceIfContains("(",")","[","]","{","}")
+            replaceIfContains("(", ")", "[", "]", "{", "}")
             return temp
         }
-        if(escapeIllegalCharacters){
+        if (escapeIllegalCharacters) {
             behind = behind.escapeIllegalCharacters()
             match = match.escapeIllegalCharacters()
             ahead = ahead.escapeIllegalCharacters()
@@ -860,9 +893,9 @@ println("workingList2=$workingList2")*/
      * and missing in the smaller string
      * */
     fun printDiff(str1: String, str2: String): List<Int> {
-        val biggerString = if(str1.length>str2.length) str1 else str2
-        val smallerString = if(biggerString === str1) str2 else str1
-        val missingIndices = getDiff(biggerString,smallerString)
+        val biggerString = if (str1.length > str2.length) str1 else str2
+        val smallerString = if (biggerString === str1) str2 else str1
+        val missingIndices = getDiff(biggerString, smallerString)
         return printDiff(missingIndices, biggerString)
     }
 
@@ -908,14 +941,14 @@ println("workingList2=$workingList2")*/
 
     fun <T> List<T>.indexOf(element: T, startIndex: Int): Int? {
         for (i in startIndex until this.size) {
-            if(this[i] == element) return i
+            if (this[i] == element) return i
         }
         return null
     }
 
-    fun <T> Iterable<T>.toFrequencyMap(): Map<T,Int>{
+    fun <T> Iterable<T>.toFrequencyMap(): Map<T, Int> {
         val frequencies: MutableMap<T, Int> = mutableMapOf()
-        this.forEach{ frequencies[it] = frequencies.getOrDefault(it, 0) + 1 }
+        this.forEach { frequencies[it] = frequencies.getOrDefault(it, 0) + 1 }
         return frequencies
     }
 
@@ -956,44 +989,46 @@ println("workingList2=$workingList2")*/
      * A version of List.find() for recursive data structures. Recurses through a list of a recursive elements to find the element which matches [predicate] by selecting the next list using [recursiveSelector]
      * For example, given class Foo(val a: Char, val b: List<Foo>)
      * val list = listOf(
-                        Foo('a',
-                            listOf(
-                                Foo('b',
-                                    listOf(
-                                        Foo('c',
-                                            listOf()
-                                        )
-                                    )
-                                ),
-                                Foo('d',
-                                    listOf(
-                                        Foo('e',
-                                            listOf(
-                                                Foo('f',
-                                                    listOf()
-                                                )
-                                            )
-                                        )
-                                    )
-                                )
-                            )
-                        )
-                    )
-    list.deepFind({ it.a == 'z' }) { it.b } != null == false
-    list.deepFind({ it.a == 'a' }) { it.b } != null == true
-    list.deepFind({ it.a == 'f' }) { it.b } != null == true
+    Foo('a',
+    listOf(
+    Foo('b',
+    listOf(
+    Foo('c',
+    listOf()
+    )
+    )
+    ),
+    Foo('d',
+    listOf(
+    Foo('e',
+    listOf(
+    Foo('f',
+    listOf()
+    )
+    )
+    )
+    )
+    )
+    )
+    )
+    )
+    list.recursiveFind({ it.a == 'z' }) { it.b } != null == false
+    list.recursiveFind({ it.a == 'a' }) { it.b } != null == true
+    list.recursiveFind({ it.a == 'f' }) { it.b } != null == true
      * */
-   fun​ <​E​> List<E>.​recursiveFind​(​predicate​:​ (​E​) ​->​ ​Boolean​, ​recursiveSelector​:​ (​E​) ​->​ ​List​<​E​>): ​E​?​ { 
-  ​     for​(element ​in​ ​this​){ 
-           if(predicate(element)) return element
-  ​         val find ​=​ recursiveSelector(element).recursiveFind(predicate, recursiveSelector)​//​check the next layer 
-  ​         if​(find ​!=​ ​null​) ​return​ find 
-  ​     } 
-  ​     ​return​ ​null 
-  ​  }
+    fun <E> List<E>.recursiveFind(predicate: (E) -> Boolean, recursiveSelector: (E) -> List<E>): E? {
+        if (isEmpty()) return null
+        for (element in this) {
+            return if (predicate(element)) element else /*check the next layer*/ recursiveSelector(element).recursiveFind(
+                predicate,
+                recursiveSelector
+            ) ?: continue
+        }
+        return null
+    }
 
     @JvmStatic
     fun main(args: Array<String>) {
-        println("KotlinFunctionLibrary v3.0.0")
+        println("KotlinFunctionLibrary v3.1.0")
     }
 }

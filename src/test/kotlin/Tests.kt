@@ -1,10 +1,44 @@
 
 import KotlinFunctionLibrary.formatted
 import KotlinFunctionLibrary.println
+import KotlinFunctionLibrary.recursiveFind
 import org.junit.Test
 import org.junit.Assert.*
 
 class Tests {
+
+    @Test
+    fun test_recursive_find() {
+        class Foo(val a: Char, val b: List<Foo>)
+        val list = listOf(
+            Foo('a',
+                listOf(
+                    Foo('b',
+                        listOf(
+                            Foo('c',
+                                listOf()
+                            )
+                        )
+                    ),
+                    Foo('d',
+                        listOf(
+                            Foo('e',
+                                listOf(
+                                    Foo('f',
+                                        listOf()
+                                    )
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+        assertTrue(list.recursiveFind({ it.a == 'a' }) { it.b } != null)
+        assertTrue(list.recursiveFind({ it.a == 'f' }) { it.b } != null)
+        assertFalse(list.recursiveFind({ it.a == 'z'}) { it.b } != null)
+    }
+
     @Test
     fun test_format_time() {
 
