@@ -1026,6 +1026,16 @@ println("workingList2=$workingList2")*/
         }
         return null
     }
+    fun <E> List<E>.recursiveForEach(action: (E) -> Unit, recursiveSelector: (E) -> List<E>): Unit {
+        if (isEmpty()) return
+        for (element in this) {
+            action(element) 
+            recursiveSelector(element).recursiveForEach(
+                action,
+                recursiveSelector
+            )
+      }
+    }
 
     @JvmStatic
     fun main(args: Array<String>) {
