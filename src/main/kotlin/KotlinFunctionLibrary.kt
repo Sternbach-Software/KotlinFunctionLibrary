@@ -1046,31 +1046,31 @@ val z = listOf(                       listOf('1', '2', 'a'), listOf('3', 'f', '4
 println(x in y) //prints true
 println(x in z) //prints true
 */
-public operator fun <T> List<List<T>>.contains(other: List<List<T>>): Boolean = indexOf(other, 0, this.size) >= 0
+    operator fun <T> List<List<T>>.contains(other: List<List<T>>): Boolean = contains(other) { thisList, otherList -> thisList.any { it in otherList } }
+        
+    fun <T> List<T>.contains(other: List<T>, predicate: (thisElement: T, otherElement: T) -> Boolean): Boolean = indexOf(other, 0, this.size, predicate) >= 0
 
-public fun <T> List<List<T>>.indexOf(other: List<List<T>>, startIndex: Int, endIndex: Int): Int {
-    val indices = startIndex.coerceAtLeast(0)..endIndex.coerceAtMost(this.size)
+    private fun <T> List<T>.indexOf(other: List<T>, startIndex: Int, endIndex: Int, predicate: (thisElement: T, otherElement: T) -> Boolean): Int {
+        fun <T> List<T>.regionMatches(thisOffset: Int, other: List<T>, otherOffset: Int, size: Int, predicate: (thisElement: T, otherElement: T) -> Boolean): Boolean {
+            if ((otherOffset < 0) || (thisOffset < 0) || (thisOffset > this.size - size) || (otherOffset > other.size - size)) {
+                return false
+            }
+
+            for (index in 0 until size) {
+                if (!predicate(this[thisOffset + index], other[otherOffset + index]))
+                    return false
+            }
+            return true
+        }
+        val indices = startIndex.coerceAtLeast(0)..endIndex.coerceAtMost(this.size)
 
         for (index in indices) {
-            if (other.regionMatches(0, this, index, other.size))
+            if (other.regionMatches(0, this, index, other.size, predicate))
                 return index
         }
-    return -1
-}
-
-private fun <T> List<List<T>>.regionMatches(thisOffset: Int, other: List<List<T>>, otherOffset: Int, size: Int): Boolean {
-    if ((otherOffset < 0) || (thisOffset < 0) || (thisOffset > this.size - size) || (otherOffset > other.size - size)) {
-        return false
+        return -1
     }
 
-    for (index in 0 until size) {
-        val otherSubList = other[otherOffset + index]
-        
-        if (this[thisOffset + index].none { it in otherSubList })
-            return false
-    }
-    return true
-}
     @JvmStatic
     fun main(args: Array<String>) {
         println("KotlinFunctionLibrary v3.2.0")
