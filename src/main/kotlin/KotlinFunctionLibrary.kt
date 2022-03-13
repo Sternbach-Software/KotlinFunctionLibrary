@@ -1046,7 +1046,7 @@ val z = listOf(                       listOf('1', '2', 'a'), listOf('3', 'f', '4
 println(x in y) //prints true
 println(x in z) //prints true
 */
-    operator fun <T> List<List<T>>.contains(other: List<List<T>>): Boolean = contains(other) { thisList, otherList -> thisList.any { it in otherList } }
+    operator fun <T> List<Iterable<T>>.contains(other: List<Iterable<T>>): Boolean = contains(other) { thisList, otherList -> thisList.any { it in otherList } }
         
     fun <T> List<T>.contains(other: List<T>, predicate: (thisElement: T, otherElement: T) -> Boolean): Boolean = indexOf(other, 0, this.size, predicate) >= 0
 
