@@ -798,8 +798,8 @@ println("workingList2=$workingList2")*/
     }
 
     fun String.substringBetween(str1: String, str2: String): String {
-        val index1 = indexOf(str1)
-        return substring(index1 + str1.length, indexOf(str2, index1))
+        val endOfStr1 = indexOf(str1) + str1.length
+        return substring(endOfStr1, indexOf(str2, endOfStr1))
     }
 
     /**
