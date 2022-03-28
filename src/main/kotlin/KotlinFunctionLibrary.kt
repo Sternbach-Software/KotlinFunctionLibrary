@@ -1070,6 +1070,27 @@ println(x in z) //prints true
         }
         return -1
     }
+    
+    
+    private fun <T> Iterable<T>.collectionSizeOrDefault(default: Int): Int = if (this is Collection<*>) this.size else default
+    
+    fun <E, R> Iterable<E>.recursiveMap(
+        transform: (E) -> R,
+        recursiveSelector: (E) -> Iterable<E>
+    ): List<R> = recursiveMapTo(ArrayList(collectionSizeOrDefault(10)), transform, recursiveSelector)
+
+    fun <T, R, C: MutableCollection<in R>> Iterable<T>.recursiveMapTo(
+        destination: C,
+        transform: (T) -> R,
+        recursiveSelector: (T) -> Iterable<T>
+    ): C {
+        for (element in this) {
+            destination.add(transform(element))
+            recursiveSelector(element).recursiveMapTo(destination, transform, recursiveSelector) //transform children
+        }
+        return destination
+    }
+
 
     @JvmStatic
     fun main(args: Array<String>) {
