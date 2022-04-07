@@ -9,6 +9,7 @@ import java.nio.file.StandardOpenOption
 import java.util.*
 import java.util.regex.Matcher
 import java.util.regex.Pattern
+import kotlin.properties.ReadWriteProperty
 import kotlin.reflect.KClass
 import kotlin.reflect.KProperty1
 import kotlin.reflect.full.memberProperties
@@ -1091,6 +1092,28 @@ println(x in z) //prints true
         return destination
     }
 
+    /**
+     * A `val foo by lazy {}` alternative that supports vars, viz. `var foo = by LazyMutable {}`
+     * */
+    class LazyMutable<T>(val initializer: () -> T) : ReadWriteProperty<Any?, T> {
+        private val UNINITIALIZED_VALUE = Any()
+        private var prop: Any? = UNINITIALIZED_VALUE
+
+        @Suppress("UNCHECKED_CAST")
+        override fun getValue(thisRef: Any?, property: KProperty<*>): T {
+            return if (prop == UNINITIALIZED_VALUE) {
+                synchronized(this) {
+                    return if (prop == UNINITIALIZED_VALUE) initializer().also { prop = it } else prop as T
+                }
+            } else prop as T
+        }
+
+        override fun setValue(thisRef: Any?, property: KProperty<*>, value: T) {
+            synchronized(this) {
+                prop = value
+            }
+        }
+    }
 
     @JvmStatic
     fun main(args: Array<String>) {
