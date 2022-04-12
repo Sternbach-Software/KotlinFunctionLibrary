@@ -1115,9 +1115,67 @@ println(x in z) //prints true
             }
         }
     }
+    
+    
+    /**
+     * An iterable that mimics [withIndex], but replace the indices with the values of a second iterator.
+     * This can be thought of as a lazy version of [Iterable.zip].
+     * Iteration will only proceed so long as both iterators have more items, lending to the idea of "zipping" the iterators.
+     * 
+     * @param offset the number of elements to start iterating from. Must be less than the smallest one of the iterators.
+     * */
+    class ZippingIterableWithOffset<A, B>(
+        private val iterator1: Iterator<A>,
+        private val iterator2: Iterator<B>,
+        private val offset: Int = 0
+    ) : Iterable<Pair<A, B>> {
+        init {
+            require(offset >= 0)
+            var index = 0
+            while(index < offset) {
+                iterator1.next()
+                iterator2.next()
+                index++
+            }
+        }
+        override fun iterator(): Iterator<Pair<A, B>> {
+            return object : Iterator<Pair<A, B>> {
+
+                override fun hasNext(): Boolean {
+                    return iterator1.hasNext() && iterator2.hasNext()
+                }
+
+                override fun next(): Pair<A, B> {
+                    return iterator1.next() to iterator2.next()
+                }
+            }
+        }
+    }
+    class ZippingIterable<A, B>(
+        private val iterator1: Iterator<A>,
+        private val iterator2: Iterator<B>,
+    ) : Iterable<Pair<A, B>> {
+        override fun iterator(): Iterator<Pair<A, B>> {
+            return object : Iterator<Pair<A, B>> {
+
+                override fun hasNext(): Boolean {
+                    return iterator1.hasNext() && iterator2.hasNext()
+                }
+
+                override fun next(): Pair<A, B> {
+                    return iterator1.next() to iterator2.next()
+                }
+            }
+        }
+    }
+
+    fun <A, B> Iterable<A>.with(other: Iterable<B>): ZippingIterable<A, B> =
+        ZippingIterable(this.iterator(), other.iterator())
+    fun <A, B> Iterable<A>.withOffset(other: Iterable<B>, offset: Int): ZippingIterableWithOffset<A, B> =
+        ZippingIterableWithOffset(this.iterator(), other.iterator(), offset)
 
     @JvmStatic
     fun main(args: Array<String>) {
-        println("KotlinFunctionLibrary v3.2.0")
+        println("KotlinFunctionLibrary v4.0.0")
     }
 }
