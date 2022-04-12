@@ -1127,14 +1127,16 @@ println(x in z) //prints true
     class ZippingIterableWithOffset<A, B>(
         private val iterator1: Iterator<A>,
         private val iterator2: Iterator<B>,
-        private val offset: Int = 0
+        private val offset: Int = 0,
+        private val applyOffsetToFirstIterator: Boolean,
+        private val applyOffsetToSecondIterator: Boolean,
     ) : Iterable<Pair<A, B>> {
         init {
             require(offset >= 0)
             var index = 0
             while(index < offset) {
-                iterator1.next()
-                iterator2.next()
+                if(applyOffsetToFirstIterator) iterator1.next()
+                if(applyOffsetToSecondIterator) iterator2.next()
                 index++
             }
         }
