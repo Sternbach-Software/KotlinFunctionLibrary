@@ -1122,7 +1122,7 @@ println(x in z) //prints true
      * This can be thought of as a lazy version of [Iterable.zip].
      * Iteration will only proceed so long as both iterators have more items, lending to the idea of "zipping" the iterators.
      * 
-     * @param offset the number of elements to start iterating from. Must be less than the smallest one of the iterators.
+     * @param offset the number of elements to start iterating from. Must be less than the smallest one of the iterators. Assumes that the [Iterable]'s implementation of [Iterable.next] moves the iteration window/index forward, such that a subsequent call to [Iterable.next] will yield the next element in the [Iterable].
      * */
     class ZippingIterableWithOffset<A, B>(
         private val iterator1: Iterator<A>,
