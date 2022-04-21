@@ -1018,7 +1018,7 @@ println("workingList2=$workingList2")*/
     list.recursiveFind({ it.a == 'a' }) { it.b } != null == true
     list.recursiveFind({ it.a == 'f' }) { it.b } != null == true
      * */
-    inline fun <E> List<E>.recursiveFind(predicate: (E) -> Boolean, recursiveSelector: (E) -> List<E>): E? {
+    fun <E> List<E>.recursiveFind(predicate: (E) -> Boolean, recursiveSelector: (E) -> List<E>): E? {
         if (isEmpty()) return null
         for (element in this) {
             return if (predicate(element)) element else /*check the next layer*/ recursiveSelector(element).recursiveFind(
@@ -1028,7 +1028,7 @@ println("workingList2=$workingList2")*/
         }
         return null
     }
-    inline fun <E> List<E>.recursiveForEach(action: (E) -> Unit, recursiveSelector: (E) -> List<E>): Unit {
+    fun <E> List<E>.recursiveForEach(action: (E) -> Unit, recursiveSelector: (E) -> List<E>): Unit {
         if (isEmpty()) return
         for (element in this) {
             action(element) 
@@ -1052,7 +1052,7 @@ println(x in z) //prints true
         
     inline fun <T> List<T>.contains(other: List<T>, predicate: (thisElement: T, otherElement: T) -> Boolean): Boolean = indexOf(other, 0, this.size, predicate) >= 0
 
-    private inline fun <T> List<T>.indexOf(other: List<T>, startIndex: Int, endIndex: Int, predicate: (thisElement: T, otherElement: T) -> Boolean): Int {
+    inline fun <T> List<T>.indexOf(other: List<T>, startIndex: Int, endIndex: Int, predicate: (thisElement: T, otherElement: T) -> Boolean): Int {
         fun <T> List<T>.regionMatches(thisOffset: Int, other: List<T>, otherOffset: Int, size: Int, predicate: (thisElement: T, otherElement: T) -> Boolean): Boolean {
             if ((otherOffset < 0) || (thisOffset < 0) || (thisOffset > this.size - size) || (otherOffset > other.size - size)) {
                 return false
@@ -1074,14 +1074,14 @@ println(x in z) //prints true
     }
     
     
-    private fun <T> Iterable<T>.collectionSizeOrDefault(default: Int): Int = if (this is Collection<*>) this.size else default
+    fun <T> Iterable<T>.collectionSizeOrDefault(default: Int): Int = if (this is Collection<*>) this.size else default
     
-    inline fun <E, R> Iterable<E>.recursiveMap(
+    fun <E, R> Iterable<E>.recursiveMap(
         transform: (E) -> R,
         recursiveSelector: (E) -> Iterable<E>
     ): List<R> = recursiveMapTo(ArrayList(collectionSizeOrDefault(10)), transform, recursiveSelector)
 
-    inline fun <T, R, C: MutableCollection<in R>> Iterable<T>.recursiveMapTo(
+    fun <T, R, C: MutableCollection<in R>> Iterable<T>.recursiveMapTo(
         destination: C,
         transform: (T) -> R,
         recursiveSelector: (T) -> Iterable<T>
