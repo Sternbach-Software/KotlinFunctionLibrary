@@ -82,13 +82,13 @@ object KotlinFunctionLibrary {
      * A version of print which passes [this] into [message] to create the message to pass to print, and returns [this], facilitating fluent interfaces, functional programming, and assisting in debugging.
      * Also useful for debugging values without breaking a call change or interrupting the flow of code for logging values.
      * */
-    fun <T, R> T.print(message: (T) -> R) = this.apply { kotlin.io.print(message(this)) }
+    inline fun <T, R> T.print(message: (T) -> R) = this.apply { kotlin.io.print(message(this)) }
 
     /**
      * A version of println which passes [this] into [message] to create the message to pass to println, and returns [this], facilitating fluent interfaces, functional programming, and assisting in debugging.
      * Also useful for debugging values without breaking a call change or interrupting the flow of code for logging values.
      * */
-    fun <T, R> T.println(message: (T) -> R) = this.apply { kotlin.io.println(message(this)) }
+    inline fun <T, R> T.println(message: (T) -> R) = this.apply { kotlin.io.println(message(this)) }
 
     /**
      *  Returns a list equivalent to appending the contents of [this] to [this] (e.g. listOf(1,2,3).doubled() == listOf(1,2,3,1,2,3) )
@@ -98,7 +98,7 @@ object KotlinFunctionLibrary {
     /**
      * Return result of [block] or, if block threw an error (i.e. did not complete), run [onError] and return null. NOTE: Will also return null if [block] completed and returned null
      * */
-    fun <T, R> tryAndReturn(
+    inline fun <T, R> tryAndReturn(
         onError: (e: Throwable, result: R?) -> T = { e, result -> kotlin.io.println("Error thrown; Throwable: $e, Result: $result") as T },
         block: () -> R
     ): R? {
@@ -117,7 +117,7 @@ object KotlinFunctionLibrary {
      * NOTE: Will also return null if [block] completed and returned null
      * @param returnErrorBlock true if caller wants to return the result of the error block in case it is run. Assumes that [onError] will return a nullable version of whatever type [block] returns
      * */
-    fun <T, R> tryAndReturn(
+    inline fun <T, R> tryAndReturn(
         returnErrorBlock: Boolean,
         onError: (e: Throwable, result: R?) -> T = { e, result -> kotlin.io.println("Throwable: $e, Result: $result") as T },
         block: () -> R
@@ -137,7 +137,7 @@ object KotlinFunctionLibrary {
      *  @param message the message to be displayed when printing the time to complete. Will be passed to System.out.printf, so can use "%d"
      *  as the template/placeholder for the time to complete
      * */
-    fun measureNanoTimeAndPrintWithoutReturningResult(
+    inline fun measureNanoTimeAndPrintWithoutReturningResult(
         inSeconds: Boolean = false,
         message: String = if (inSeconds) "Time to complete: %f seconds" else "Time to complete: %d nanoseconds",
         block: () -> Unit
@@ -153,7 +153,7 @@ object KotlinFunctionLibrary {
      *  as the template/placeholder for the time to complete
      *  @see #measureNanoTimeAndPrintAndReturnResult(Boolean, String, T, (T) -> R)}
      * */
-    fun <T> measureNanoTimeAndPrintAndReturnResult(
+    inline fun <T> measureNanoTimeAndPrintAndReturnResult(
         inSeconds: Boolean = false,
         message: String = if (inSeconds) "Time to complete: %f seconds" else "Time to complete: %d nanoseconds",
         block: () -> T
@@ -171,7 +171,7 @@ object KotlinFunctionLibrary {
      *  as the template/placeholder for the time to complete
      *  @param param parameter to pass to [block]
      * */
-    fun <T, R> measureNanoTimeAndPrintAndReturnResult(
+    inline fun <T, R> measureNanoTimeAndPrintAndReturnResult(
         inSeconds: Boolean = false,
         message: String = if (inSeconds) "Time to complete: %d seconds" else "Time to complete: %d nanoseconds",
         param: T,
@@ -218,7 +218,7 @@ object KotlinFunctionLibrary {
      * @param predicate function that takes the input and returns the result of predicate evaluation on the input.
      * @return an input from the user which matches [predicate]
      * */
-    fun getValidatedInput(
+    inline fun getValidatedInput(
         firstMessageToDisplay: String,
         messageToDisplayOnError: String,
         predicate: (String?) -> Boolean
@@ -508,7 +508,7 @@ object KotlinFunctionLibrary {
      * Returns a list containing the results of applying the given [transform] function
      * to each element in the original collection.
      * */
-    fun <T, R> Iterable<T>.toListBy(transform: (T) -> R): MutableList<R> {
+    inline fun <T, R> Iterable<T>.toListBy(transform: (T) -> R): MutableList<R> {
         val mutableList: MutableList<R> = mutableListOf()
         forEach { mutableList.add(transform(it)) }
         return mutableList
@@ -517,7 +517,7 @@ object KotlinFunctionLibrary {
     /**
      * @param nullable to distinguish between nullable and not
      * */
-    fun <T, R> Iterable<T?>.toListBy(nullable: Boolean, transform: (T) -> R): MutableList<R> {
+    inline fun <T, R> Iterable<T?>.toListBy(nullable: Boolean, transform: (T) -> R): MutableList<R> {
         val mutableList: MutableList<R> = mutableListOf()
         forEach { it?.let { it1 -> mutableList.add(transform(it1)) } }
         return mutableList
@@ -591,7 +591,7 @@ println("workingList2=$workingList2")*/
     /**
      * Version of {@link MutableList#replaceAll(UnaryOperator)} which compiles to earlier versions of Kotlin and Android by avoiding the use of UnaryOperator
      * */
-    fun <E> MutableList<E>.replaceAll(operator: (E?) -> E) {
+    inline fun <E> MutableList<E>.replaceAll(operator: (E?) -> E) {
         val li: MutableListIterator<E> = this.listIterator()
         while (li.hasNext()) {
             li.set(operator(li.next()))
@@ -652,7 +652,7 @@ println("workingList2=$workingList2")*/
      * Creates a file (or overwrites if already existing and [overwrite] is true), and takes care of releasing the[BufferedWriter]
      * which is passed in to [action].
      * */
-    fun createFileAndPerformWrite(filename: String, overwrite: Boolean, action: (BufferedWriter) -> Unit) {
+    inline fun createFileAndPerformWrite(filename: String, overwrite: Boolean, action: (BufferedWriter) -> Unit) {
         File(filename).apply {
             createFile(overwrite)
             performWrite(action)
@@ -663,7 +663,7 @@ println("workingList2=$workingList2")*/
      * Creates a file (or overwrites if already existing and [overwrite] is true), and takes care of releasing the[BufferedReader]
      * which is passed in to [action].
      * */
-    fun createFileAndPerformRead(filename: String, overwrite: Boolean, action: (BufferedReader) -> Unit) {
+    inline fun createFileAndPerformRead(filename: String, overwrite: Boolean, action: (BufferedReader) -> Unit) {
         File(filename).apply {
             createFile(overwrite)
             performRead(action)
@@ -674,7 +674,7 @@ println("workingList2=$workingList2")*/
      * Creates a file (or overwrites if already existing and [overwrite] is true), and takes care of releasing the[BufferedWriter]
      * which is passed in to [action].
      * */
-    fun File.createFileAndPerformWrite(overwrite: Boolean, action: (BufferedWriter) -> Unit) {
+    inline fun File.createFileAndPerformWrite(overwrite: Boolean, action: (BufferedWriter) -> Unit) {
         createFile(overwrite)
         performWrite(action)
     }
@@ -683,7 +683,7 @@ println("workingList2=$workingList2")*/
      * Creates a file (or overwrites if already existing and [overwrite] is true), and takes care of releasing the[BufferedReader]
      * which is passed in to [action].
      * */
-    fun File.createFileAndPerformRead(overwrite: Boolean, action: (BufferedReader) -> Unit) {
+    inline fun File.createFileAndPerformRead(overwrite: Boolean, action: (BufferedReader) -> Unit) {
         createFile(overwrite)
         performRead(action)
     }
@@ -712,7 +712,7 @@ println("workingList2=$workingList2")*/
     /**
      * Performs an on a file by passing the file's [bufferedWriter] to [action] and closing it after the action is done
      * */
-    fun File.performWrite(action: (BufferedWriter) -> Unit) {
+    inline fun File.performWrite(action: (BufferedWriter) -> Unit) {
         val writer = bufferedWriter()
         action(writer)
         writer.close()
@@ -745,7 +745,7 @@ println("workingList2=$workingList2")*/
      * Performs an [action] on a file by passing the file's [bufferedReader] to [action] and closing it after the action is done
      * @return the result of the lambda [action]
      * */
-    fun <R> File.performRead(action: (BufferedReader) -> R): R {
+    inline fun <R> File.performRead(action: (BufferedReader) -> R): R {
         val r: R
         val reader = bufferedReader()
         r = action(reader)
@@ -758,7 +758,7 @@ println("workingList2=$workingList2")*/
      * Use case:                 it.appendLine("High-risk demographic: ".appendIf("Male(${first.ageRange.first}-${first.ageRange.last})") { demographics.size == 1 }.appendIf("Female(${first.ageRange.first}-${first.ageRange.last}") { demographics.size == 2 } )
 
      * */
-    fun String.appendIf(append: String, predicate: (String) -> Boolean): String {
+    inline fun String.appendIf(append: String, predicate: (String) -> Boolean): String {
         return if (predicate(this)) this + append else this
     }
 
@@ -767,17 +767,17 @@ println("workingList2=$workingList2")*/
      * Use case:                 it.appendLine("High-risk demographic: ".appendIf("Male(${first.ageRange.first}-${first.ageRange.last})","N\\A") { demographics.size == 1 }.appendIf("Female(${first.ageRange.first}-${first.ageRange.last}") { demographics.size == 2 } )
 
      * */
-    fun String.appendIf(append: String, `else`: String, predicate: (String) -> Boolean): String {
+    inline fun String.appendIf(append: String, `else`: String, predicate: (String) -> Boolean): String {
         return if (predicate(this)) this + append else this + `else`
     }
 
-    fun <T> myBuildList(capacity: Int, action: () -> T): List<T> {
+    inline fun <T> myBuildList(capacity: Int, action: () -> T): List<T> {
         val list = mutableListOf<T>()
         for (i in 0 until capacity) list.add(action())
         return list.toList()
     }
 
-    fun <T> myBuildMutableList(capacity: Int, action: () -> T): MutableList<T> {
+    inline fun <T> myBuildMutableList(capacity: Int, action: () -> T): MutableList<T> {
         val list = mutableListOf<T>()
         for (i in 0 until capacity) list.add(action())
         return list
@@ -957,7 +957,7 @@ println("workingList2=$workingList2")*/
     /**
      * Returns a list which contains a copy of [this] [n] times: e.g. listOf(1,2,3).multiplyBy(3){it+1} == listOf(1,2,3, 2,3,4, 2,3,4)
      * */
-    fun <E> MutableList<E>.multiplyListBy(n: Int, transform: (E) -> E): MutableList<E> {
+    inline fun <E> MutableList<E>.multiplyListBy(n: Int, transform: (E) -> E): MutableList<E> {
         return also {
             val original = it.toList()
             (1 until n).forEach { i -> it.addAll(original.map { it1 -> transform(it1) }) }
@@ -1018,7 +1018,7 @@ println("workingList2=$workingList2")*/
     list.recursiveFind({ it.a == 'a' }) { it.b } != null == true
     list.recursiveFind({ it.a == 'f' }) { it.b } != null == true
      * */
-    fun <E> List<E>.recursiveFind(predicate: (E) -> Boolean, recursiveSelector: (E) -> List<E>): E? {
+    inline fun <E> List<E>.recursiveFind(predicate: (E) -> Boolean, recursiveSelector: (E) -> List<E>): E? {
         if (isEmpty()) return null
         for (element in this) {
             return if (predicate(element)) element else /*check the next layer*/ recursiveSelector(element).recursiveFind(
@@ -1028,7 +1028,7 @@ println("workingList2=$workingList2")*/
         }
         return null
     }
-    fun <E> List<E>.recursiveForEach(action: (E) -> Unit, recursiveSelector: (E) -> List<E>): Unit {
+    inline fun <E> List<E>.recursiveForEach(action: (E) -> Unit, recursiveSelector: (E) -> List<E>): Unit {
         if (isEmpty()) return
         for (element in this) {
             action(element) 
@@ -1050,9 +1050,9 @@ println(x in z) //prints true
 */
     operator fun <T> List<Iterable<T>>.contains(other: List<Iterable<T>>): Boolean = contains(other) { thisList, otherList -> thisList.any { it in otherList } }
         
-    fun <T> List<T>.contains(other: List<T>, predicate: (thisElement: T, otherElement: T) -> Boolean): Boolean = indexOf(other, 0, this.size, predicate) >= 0
+    inline fun <T> List<T>.contains(other: List<T>, predicate: (thisElement: T, otherElement: T) -> Boolean): Boolean = indexOf(other, 0, this.size, predicate) >= 0
 
-    private fun <T> List<T>.indexOf(other: List<T>, startIndex: Int, endIndex: Int, predicate: (thisElement: T, otherElement: T) -> Boolean): Int {
+    private inline fun <T> List<T>.indexOf(other: List<T>, startIndex: Int, endIndex: Int, predicate: (thisElement: T, otherElement: T) -> Boolean): Int {
         fun <T> List<T>.regionMatches(thisOffset: Int, other: List<T>, otherOffset: Int, size: Int, predicate: (thisElement: T, otherElement: T) -> Boolean): Boolean {
             if ((otherOffset < 0) || (thisOffset < 0) || (thisOffset > this.size - size) || (otherOffset > other.size - size)) {
                 return false
@@ -1076,12 +1076,12 @@ println(x in z) //prints true
     
     private fun <T> Iterable<T>.collectionSizeOrDefault(default: Int): Int = if (this is Collection<*>) this.size else default
     
-    fun <E, R> Iterable<E>.recursiveMap(
+    inline fun <E, R> Iterable<E>.recursiveMap(
         transform: (E) -> R,
         recursiveSelector: (E) -> Iterable<E>
     ): List<R> = recursiveMapTo(ArrayList(collectionSizeOrDefault(10)), transform, recursiveSelector)
 
-    fun <T, R, C: MutableCollection<in R>> Iterable<T>.recursiveMapTo(
+    inline fun <T, R, C: MutableCollection<in R>> Iterable<T>.recursiveMapTo(
         destination: C,
         transform: (T) -> R,
         recursiveSelector: (T) -> Iterable<T>
