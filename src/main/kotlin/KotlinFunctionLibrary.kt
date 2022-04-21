@@ -1052,8 +1052,18 @@ println(x in z) //prints true
         
     inline fun <T> List<T>.contains(other: List<T>, predicate: (thisElement: T, otherElement: T) -> Boolean): Boolean = indexOf(other, 0, this.size, predicate) >= 0
 
-    inline fun <T> List<T>.indexOf(other: List<T>, startIndex: Int, endIndex: Int, predicate: (thisElement: T, otherElement: T) -> Boolean): Int {
-        fun <T> List<T>.regionMatches(thisOffset: Int, other: List<T>, otherOffset: Int, size: Int, predicate: (thisElement: T, otherElement: T) -> Boolean): Boolean {
+    fun <T> List<T>.indexOf(other: List<T>, startIndex: Int, endIndex: Int, predicate: (thisElement: T, otherElement: T) -> Boolean): Int {
+       
+        val indices = startIndex.coerceAtLeast(0)..endIndex.coerceAtMost(this.size)
+
+        for (index in indices) {
+            if (other.regionMatches(0, this, index, other.size, predicate))
+                return index
+        }
+        return -1
+    }
+    
+    inline fun <T> List<T>.regionMatches(thisOffset: Int, other: List<T>, otherOffset: Int, size: Int, predicate: (thisElement: T, otherElement: T) -> Boolean): Boolean {
             if ((otherOffset < 0) || (thisOffset < 0) || (thisOffset > this.size - size) || (otherOffset > other.size - size)) {
                 return false
             }
@@ -1064,15 +1074,6 @@ println(x in z) //prints true
             }
             return true
         }
-        val indices = startIndex.coerceAtLeast(0)..endIndex.coerceAtMost(this.size)
-
-        for (index in indices) {
-            if (other.regionMatches(0, this, index, other.size, predicate))
-                return index
-        }
-        return -1
-    }
-    
     
     fun <T> Iterable<T>.collectionSizeOrDefault(default: Int): Int = if (this is Collection<*>) this.size else default
     
