@@ -1050,7 +1050,7 @@ println(x in z) //prints true
 */
     operator fun <T> List<Iterable<T>>.contains(other: List<Iterable<T>>): Boolean = contains(other) { thisList, otherList -> thisList.any { it in otherList } }
         
-    inline fun <T> List<T>.contains(other: List<T>, predicate: (thisElement: T, otherElement: T) -> Boolean): Boolean = indexOf(other, 0, this.size, predicate) >= 0
+    fun <T> List<T>.contains(other: List<T>, predicate: (thisElement: T, otherElement: T) -> Boolean): Boolean = indexOf(other, 0, this.size, predicate) >= 0
 
     fun <T> List<T>.indexOf(other: List<T>, startIndex: Int, endIndex: Int, predicate: (thisElement: T, otherElement: T) -> Boolean): Int {
        
