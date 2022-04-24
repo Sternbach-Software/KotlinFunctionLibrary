@@ -1174,7 +1174,7 @@ println(x in z) //prints true
 
     fun <A, B> Iterable<A>.with(other: Iterable<B>): ZippingIterable<A, B> =
         ZippingIterable(this.iterator(), other.iterator())
-    fun <A, B> Iterable<A>.withOffset(other: Iterable<B>, offset: Int, applyOffsetToFirstIterable: Boolean = true, applyOffsetToSecondIterable: Boolean = true): ZippingIterableWithOffset<A, B> =
+    fun <A, B> Iterable<A>.with(other: Iterable<B>, offset: Int, applyOffsetToFirstIterable: Boolean = true, applyOffsetToSecondIterable: Boolean = true): ZippingIterableWithOffset<A, B> =
         ZippingIterableWithOffset(this.iterator(), other.iterator(), offset, applyOffsetToFirstIterable,  applyOffsetToSecondIterable)
 
     @JvmStatic
