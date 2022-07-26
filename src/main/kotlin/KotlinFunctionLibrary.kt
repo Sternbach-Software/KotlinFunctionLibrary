@@ -1176,7 +1176,13 @@ println(x in z) //prints true
         ZippingIterable(this.iterator(), other.iterator())
     fun <A, B> Iterable<A>.with(other: Iterable<B>, offset: Int, applyOffsetToFirstIterable: Boolean = true, applyOffsetToSecondIterable: Boolean = true): ZippingIterableWithOffset<A, B> =
         ZippingIterableWithOffset(this.iterator(), other.iterator(), offset, applyOffsetToFirstIterable,  applyOffsetToSecondIterable)
-
+        
+    fun <A, B> Iterable<A>.zipLazy(other: Iterable<B>): ZippingIterable<A, B> = this.with(other)
+    fun <A, B> Iterable<A>.zipLazy(other: Iterable<B>, offset: Int, applyOffsetToFirstIterable: Boolean = true, applyOffsetToSecondIterable: Boolean = true): ZippingIterableWithOffset<A, B> = this.with(other, offset, applyOffsetToFirstIterable, applyOffsetToSecondIterable)
+        
+    fun <A, B> Iterable<A>.zipWithLazy(other: Iterable<B>): ZippingIterable<A, B> = this.with(other)
+    fun <A, B> Iterable<A>.zipWithLazy(other: Iterable<B>, offset: Int, applyOffsetToFirstIterable: Boolean = true, applyOffsetToSecondIterable: Boolean = true): ZippingIterableWithOffset<A, B> = this.with(other, offset, applyOffsetToFirstIterable, applyOffsetToSecondIterable)
+        
     @JvmStatic
     fun main(args: Array<String>) {
         println("KotlinFunctionLibrary v4.0.0")
