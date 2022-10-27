@@ -1038,16 +1038,44 @@ println("workingList2=$workingList2")*/
             )
       }
     }
-/**
-* Determines whether [this] list contains a sublist such that at least one element in each list of said sublist is contained in a parallel sublist of [other].
-* This is a direct adaptation of [CharSequence.contains(CharSequence)].
-* For example the following returns true:
-val x = listOf(                       listOf('a', 'b', 'c'), listOf('d', 'e', 'f')             )
-val y = listOf(listOf('x' ,'y' ,'z'), listOf('1', '2', 'a'), listOf('3', 'f', '4'), listOf('9'))
-val z = listOf(                       listOf('1', '2', 'a'), listOf('3', 'f', '4')             )
-println(x in y) //prints true
-println(x in z) //prints true
-*/
+    
+    /**
+     * Returns index of the first element after [offset] matching the given [predicate], or -1 if the list does not contain such element.
+     */
+    public inline fun <T> List<T>.indexOf(predicate: (T) -> Boolean, offset: Int): Int {
+        var index = 0
+        for (item in this.subList(offset, this.size)) {
+            if (predicate(item))
+                return index
+            index++
+        }
+        return -1
+    }
+    
+    /**
+     * Splits a list by a predicate. List analog to [String.split]
+     * */
+    fun <E> List<E>.split(includeDelimiter: Boolean = false, predicate: (E) -> Boolean): List<List<E>> {
+        return flatMapIndexed { index, element ->
+                when {
+                    index == 0 || index == lastIndex -> listOf(index)
+                    predicate(element) -> listOf(index - 1, index + 1)
+                    else -> emptyList()
+                }
+            }
+            .windowed(size = 2, step = 2) { (from, to) -> slice( (if(includeDelimiter) (from - 1).coerceAtLeast(0) else from)..to) }
+    }
+    
+    /**
+    * Determines whether [this] list contains a sublist such that at least one element in each list of said sublist is contained in a parallel sublist of [other].
+    * This is a direct adaptation of [CharSequence.contains(CharSequence)].
+    * For example the following returns true:
+    * val x = listOf(                       listOf('a', 'b', 'c'), listOf('d', 'e', 'f')             )
+    * val y = listOf(listOf('x' ,'y' ,'z'), listOf('1', '2', 'a'), listOf('3', 'f', '4'), listOf('9'))
+    * val z = listOf(                       listOf('1', '2', 'a'), listOf('3', 'f', '4')             )
+    * println(x in y) //prints true
+    * println(x in z) //prints true
+    */
     operator fun <T> List<Iterable<T>>.contains(other: List<Iterable<T>>): Boolean = contains(other) { thisList, otherList -> thisList.any { it in otherList } }
         
     fun <T> List<T>.contains(other: List<T>, predicate: (thisElement: T, otherElement: T) -> Boolean): Boolean = indexOf(other, 0, this.size, predicate) >= 0
