@@ -1121,6 +1121,62 @@ println("workingList2=$workingList2")*/
         }
         return destination
     }
+    
+    data class HierarchicalNode<T>(
+        val data: T,
+        val hierarchyLevel: Int,
+        var parent: HierarchicalNode<T>? = null
+    )
+    /**
+     * Given a list of a hierarchical type [T], such that one [T] can be defined as the parent of another (potentially nested arbitrarily),
+     * return a list of [HierarchicalNode]s classifying the given [T]s as children and parents.
+     * For example, given a list of tasks, subtasks, sub-subtasks, etc., by defining a way to identify the level of
+     * hierarchy of a particular [T], this function can return a list of [HierarchicalNode]s representing that hierarchy.
+     * In this case, and example call could be:
+     * mutableListOf("-A","--1","--2","-B").mapToHierarchy({ it.count { it == '-' } }) { it.removePrefix("-") }
+     * */
+    fun <T, R> MutableList<T>.mapToHierarchy(
+        getHierarchicalLevel: (T) -> Int,
+        transform: (T) -> R,
+    ): List<HierarchicalNode<R>> {
+        val nodes = mutableListOf<HierarchicalNode<R>>()
+        while (isNotEmpty()) {
+            val thisElement = removeFirst()
+            val thisLevel = getHierarchicalLevel(thisElement)
+
+            val nextElement = firstOrNull()
+            val nextLevel = nextElement?.let(getHierarchicalLevel)
+
+            val parent = nodes.findLast { it.hierarchyLevel < thisLevel }
+            val thisNode = HierarchicalNode(transform(thisElement), thisLevel, parent)
+            if (parent == null) nodes.add(thisNode) //add root
+            if (nextLevel != null) {
+                when {
+                    thisLevel < nextLevel -> nodes.add(
+                        HierarchicalNode(
+                            transform(nextElement),
+                            nextLevel,
+                            thisNode
+                        )
+                    ) //moving up levels of hierarchy, add next with parent as this
+                    thisLevel > nextLevel -> nodes.add(
+                        HierarchicalNode(
+                            transform(nextElement),
+                            nextLevel,
+                            nodes.findLast { it.hierarchyLevel < nextLevel })
+                    ) //moving down levels of hierarchy, find previous parent
+                    else /*equal*/ -> nodes.add(
+                        HierarchicalNode(
+                            transform(nextElement),
+                            nextLevel,
+                            thisNode.parent
+                        )
+                    ) //same parent/level of hierarchy
+                }
+            }
+        }
+        return nodes.toList()
+    }
 
     /**
      * A `val foo by lazy {}` alternative that supports vars, viz. `var foo = by LazyMutable {}`
