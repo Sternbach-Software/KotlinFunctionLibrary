@@ -752,7 +752,21 @@ println("workingList2=$workingList2")*/
         reader.close()
         return r
     }
-
+    
+    /**
+     * Reads all lines of this file and constructs a new instance of [clazz].
+     * **Warning: this uses reflection, which is has poor performance. Use kotlinx-serialization-csv if you want compile-time
+     * efficiency**
+     * */
+    fun <T : Any> File.toCSV(clazz: KClass<T>): List<T> = toPath().toCSV(clazz)
+    fun <T: Any> Path.toCSV(clazz: KClass<T>): List<T> = Files.readAllLines(this).map { it.split(",").mapToClass(clazz) }
+    /**
+     * Maps a list of parameters to the parameters in the primary constructor of [clazz].
+     * **Warning: this uses reflection, which is has poor performance. Use kotlinx-serialization-csv if you want compile-time
+     * efficiency**
+     * */
+    fun <T : Any> List<Any>.mapToClass(clazz: KClass<T>): T = clazz.primaryConstructor!!.call(*this.toTypedArray())
+    
     /**
      * Appends [append] to [this] if [predicate] returns true when passed [this]
      * Use case:                 it.appendLine("High-risk demographic: ".appendIf("Male(${first.ageRange.first}-${first.ageRange.last})") { demographics.size == 1 }.appendIf("Female(${first.ageRange.first}-${first.ageRange.last}") { demographics.size == 2 } )
