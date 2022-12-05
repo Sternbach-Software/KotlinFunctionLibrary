@@ -801,29 +801,6 @@ println("workingList2=$workingList2")*/
         return missingIndices.toList()
     }
 
-    fun <T> List<T>.indexOf(element: T, startIndex: Int): Int? {
-        for (i in startIndex until this.size) {
-            if (this[i] == element) return i
-        }
-        return null
-    }
-
-    fun <T> Iterable<T>.toFrequencyMap(): Map<T, Int> {
-        val frequencies: MutableMap<T, Int> = mutableMapOf()
-        this.forEach { frequencies[it] = frequencies.getOrDefault(it, 0) + 1 }
-        return frequencies
-    }
-
-    /**
-     * Returns a list which contains a copy of [this] [n] times: e.g. listOf(1,2,3).multiplyBy(3){it+1} == listOf(1,2,3, 2,3,4, 2,3,4)
-     * */
-    inline fun <E> MutableList<E>.multiplyListBy(n: Int, transform: (E) -> E): MutableList<E> {
-        return also {
-            val original = it.toList()
-            (1 until n).forEach { i -> it.addAll(original.map { it1 -> transform(it1) }) }
-        }
-    }
-
     /**
      * A small method to do primitive warming up of the JVM.
      * */
@@ -911,6 +888,36 @@ println("workingList2=$workingList2")*/
         }
         return -1
     }
+    
+    fun <T> List<T>.indexOf(element: T, startIndex: Int): Int? {
+        for (i in startIndex until this.size) { //TODO use subList()?
+            if (this[i] == element) return i
+        }
+        return null
+    }
+
+    fun <T> Iterable<T>.toFrequencyMap(): Map<T, Int> {
+        val frequencies: MutableMap<T, Int> = mutableMapOf()
+        this.forEach { frequencies[it] = frequencies.getOrDefault(it, 0) + 1 }
+        return frequencies
+    }
+
+    /**
+     * Returns a list which contains a copy of [this] [n] times: e.g. listOf(1,2,3).multiplyBy(3){it+1} == listOf(1,2,3, 2,3,4, 2,3,4)
+     * */
+    inline fun <E> MutableList<E>.multiplyListBy(n: Int, transform: (E) -> E): MutableList<E> {
+        return also {
+            val original = it.toList()
+            (1 until n).forEach { i -> it.addAll(original.map { it1 -> transform(it1) }) }
+        }
+    }
+    /**
+     * A wrapper around [Iterable.find] which simplifies looking for a specific element by one of its properties.
+     * Similar to [Iterable.maxBy], but with a specific object in mind.
+     * @sample listOf<Foo>(...).findBy(bar) { it.bar }
+     * */
+    fun <T, R> Iterable<T>.findBy(key: R, selector: (T) -> R): T? = find { selector(it) == key }
+        
     
     /**
      * Splits a list by a predicate. List analog to [String.split]
