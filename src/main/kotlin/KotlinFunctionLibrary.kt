@@ -916,7 +916,7 @@ println("workingList2=$workingList2")*/
      * Similar to [Iterable.maxBy], but with a specific object in mind.
      * @sample listOf<Foo>(...).findBy(bar) { it.bar }
      * */
-    fun <T, R> Iterable<T>.findBy(key: R, selector: (T) -> R): T? = find { selector(it) == key }
+    inline fun <T, R> Iterable<T>.findBy(key: R, selector: (T) -> R): T? = find { selector(it) == key }
         
     
     /**
