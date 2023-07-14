@@ -644,9 +644,11 @@ println("workingList2=$workingList2")*/
     }
 
     /**
-     * Returns whether the given CharSequence contains only digits.
+     * Returns whether the given CharSequence contains only digits. Like [android.text.TextUtils], except returns
+     * false if blank.
      */
     fun CharSequence.isDigitsOnly(): Boolean {
+        if(isBlank()) return false
         var cp: Int
         var i = 0
         while (i < length) {
