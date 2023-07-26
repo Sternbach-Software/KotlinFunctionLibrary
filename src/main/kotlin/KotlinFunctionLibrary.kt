@@ -920,10 +920,46 @@ println("workingList2=$workingList2")*/
      * */
     inline fun <T, R> Iterable<T>.findBy(key: R, selector: (T) -> R): T? = find { selector(it) == key }
         
-    
+    /**
+     * Returns a list of snapshots of windows whose every element returns true for
+     * [predicate](window, element) (meaning that every window matches the predicate).
+     * @see windowedByMaxLength
+     */
+    fun <T> Iterable<T>.windowedBy(predicate: (window: List<T>, element: T) -> Boolean): List<List<T>> {
+        val result = mutableListOf<List<T>>()
+        val copy = ArrayDeque(toList())
+        while (copy.isNotEmpty()) {
+            val window = mutableListOf<T>()
+            var first = copy.firstOrNull()
+            while (first != null && predicate(window, first)) {
+                window.add(first)
+                copy.removeFirst()
+                first = copy.firstOrNull()
+            }
+            result.add(window)
+        }
+        return result
+    }
+    /**
+     * Returns a list of windows, where each window's length (as defined by [getElementLength]) is at most [maxLength].
+     */
+    fun <T> Iterable<T>.windowedByMaxLength(maxLength: Int, getElementLength: (T) -> Int): List<List<T>> {
+        var currentSumOfLengths = 0
+        return windowedBy { window, element ->
+            val newLength = currentSumOfLengths + getElementLength(element)
+            val sameWindow = newLength < maxLength
+            currentSumOfLengths = if(sameWindow) newLength else 0
+            sameWindow
+        }
+    }
+    /**
+     * Returns a list of windows, where every window's string's lengths add to at most [maxLength].
+     * For example, ["a", "b", "c", "d"].windowedByMaxLength(2) == [[a,b], [c,d]]
+     */
+    fun Iterable<CharSequence>.windowedByMaxLength(maxLength: Int) = windowedByMaxLength(maxLength) { it.length }
     /**
      * Splits a list by a predicate. List analog to [String.split]
-     * */
+     */
     fun <E> List<E>.split(includeDelimiter: Boolean = false, predicate: (E) -> Boolean): List<List<E>> {
         return flatMapIndexed { index, element ->
                 when {
