@@ -24,6 +24,424 @@ import SortingDelegate.sort as sortFromDelegate
  * */
 @Suppress("UNUSED")
 object KotlinFunctionLibrary {
+
+
+    /**
+     * A version of List.find() for recursive data structures. Recurses through a list of a recursive elements to find the element which matches [predicate] by selecting the next list using [recursiveSelector]
+     * For example, given class Foo(val a: Char, val b: List<Foo>)
+     * val list = listOf(
+                         Foo('a',
+                                 listOf(
+                                        Foo('b',
+                                                listOf(
+                                                       Foo('c',
+                                                           listOf()
+                                                           )
+                                                 )
+                                        ),
+                                        Foo('d',
+                                                listOf(
+                                                       Foo('e',
+                                                               listOf(
+                                                                      Foo('f',
+                                                                          listOf()
+                                                                      )
+                                                                )
+                                                        )
+                                                  )
+                                         )
+                                  )
+                          )
+                  )
+    list.recursiveFind({ it.a == 'z' }) { it.b } != null == false
+    list.recursiveFind({ it.a == 'a' }) { it.b } != null == true
+    list.recursiveFind({ it.a == 'f' }) { it.b } != null == true
+     * */
+    fun <E> List<E>.recursiveFind(predicate: (E) -> Boolean, recursiveSelector: (E) -> List<E>): E? {
+        if (isEmpty()) return null
+        for (element in this) {
+            return if (predicate(element)) element else /*check the next layer*/ recursiveSelector(element).recursiveFind(
+                predicate,
+                recursiveSelector
+            ) ?: continue
+        }
+        return null
+    }
+    fun <E> List<E>.recursiveForEach(action: (E) -> Unit, recursiveSelector: (E) -> List<E>): Unit {
+        if (isEmpty()) return
+        for (element in this) {
+            action(element) 
+            recursiveSelector(element).recursiveForEach(
+                action,
+                recursiveSelector
+            )
+      }
+    }
+    
+    fun <E, R> Iterable<E>.recursiveMap(
+        transform: (E) -> R,
+        recursiveSelector: (E) -> Iterable<E>
+    ): List<R> = recursiveMapTo(ArrayList(collectionSizeOrDefault(10)), transform, recursiveSelector)
+
+    fun <T, R, C: MutableCollection<in R>> Iterable<T>.recursiveMapTo(
+        destination: C,
+        transform: (T) -> R,
+        recursiveSelector: (T) -> Iterable<T>
+    ): C {
+        for (element in this) {
+            destination.add(transform(element))
+            recursiveSelector(element).recursiveMapTo(destination, transform, recursiveSelector) //transform children
+        }
+        return destination
+    }
+    
+    /**
+     * Returns index of the first element after [offset] matching the given [predicate], or -1 if the list does not contain such element.
+     */
+    public inline fun <T> List<T>.indexOf(predicate: (T) -> Boolean, offset: Int): Int {
+        var index = 0
+        for (item in this.subList(offset, this.size)) {
+            if (predicate(item))
+                return index
+            index++
+        }
+        return -1
+    }
+    
+    fun <T> List<T>.indexOf(element: T, startIndex: Int): Int? {
+        for (i in startIndex until this.size) { //TODO use subList()?
+            if (this[i] == element) return i
+        }
+        return null
+    }
+
+    fun <T> Iterable<T>.toFrequencyMap(): Map<T, Int> {
+        val frequencies: MutableMap<T, Int> = mutableMapOf()
+        this.forEach { frequencies[it] = frequencies.getOrDefault(it, 0) + 1 }
+        return frequencies
+    }
+    /**
+     * Returns a list of snapshots of windows whose every element returns true for
+     * [predicate](window, element) (meaning that every window matches the predicate).
+     * This can be used to window a list by properties of the elements, such as in a
+     * list of strings, where you want to partition the list of strings into groups
+     * where each group's strings' lengths adds up to no more than a number n.
+     * @see windowedByMaxLength
+     */
+    fun <T> Iterable<T>.windowedBy(predicate: (window: List<T>, element: T) -> Boolean): List<List<T>> {
+        val result = mutableListOf<List<T>>()
+        val copy = ArrayDeque(toList())
+        while (copy.isNotEmpty()) {
+            val window = mutableListOf<T>()
+            var first = copy.firstOrNull()
+            while (first != null && predicate(window, first)) {
+                window.add(first)
+                copy.removeFirst()
+                first = copy.firstOrNull()
+            }
+            result.add(window)
+        }
+        return result
+    }
+    /**
+     * Returns a list of windows, where each window's length (as defined by [getElementLength]) is at most [maxLength].
+     */
+    fun <T> Iterable<T>.windowedByMaxLength(maxLength: Int, getElementLength: (T) -> Int): List<List<T>> {
+        var currentSumOfLengths = 0
+        return windowedBy { window, element ->
+            val newLength = currentSumOfLengths + getElementLength(element)
+            val sameWindow = newLength < maxLength
+            currentSumOfLengths = if(sameWindow) newLength else 0
+            sameWindow
+        }
+    }
+    /**
+     * Returns a list of windows, where every window's string's lengths add to at most [maxLength].
+     * For example, ["a", "b", "c", "d"].windowedByMaxLength(2) == [[a,b], [c,d]]
+     */
+    fun Iterable<CharSequence>.windowedByMaxLength(maxLength: Int) = windowedByMaxLength(maxLength) { it.length }
+    /**
+     * Splits a list by a predicate. List analog to [String.split]
+     */
+    fun <E> List<E>.split(includeDelimiter: Boolean = false, predicate: (E) -> Boolean): List<List<E>> {
+        return flatMapIndexed { index, element ->
+                when {
+                    index == 0 || index == lastIndex -> listOf(index)
+                    predicate(element) -> listOf(index - 1, index + 1)
+                    else -> emptyList()
+                }
+            }
+            .windowed(size = 2, step = 2) { (from, to) -> slice( (if(includeDelimiter) (from - 1).coerceAtLeast(0) else from)..to) }
+    }
+    
+    /**
+    * Determines whether [this] list contains a sublist such that at least one element in each list of said sublist is contained in a parallel sublist of [other].
+    * This is a direct adaptation of [CharSequence.contains(CharSequence)].
+    * For example the following returns true:
+    * val x = listOf(                       listOf('a', 'b', 'c'), listOf('d', 'e', 'f')             )
+    * val y = listOf(listOf('x' ,'y' ,'z'), listOf('1', '2', 'a'), listOf('3', 'f', '4'), listOf('9'))
+    * val z = listOf(                       listOf('1', '2', 'a'), listOf('3', 'f', '4')             )
+    * println(x in y) //prints true
+    * println(x in z) //prints true
+    */
+    operator fun <T> List<Iterable<T>>.contains(other: List<Iterable<T>>): Boolean = contains(other) { thisList, otherList -> thisList.any { it in otherList } }
+        
+    fun <T> List<T>.contains(other: List<T>, predicate: (thisElement: T, otherElement: T) -> Boolean): Boolean = indexOf(other, 0, this.size, predicate) >= 0
+
+    fun <T> List<T>.indexOf(other: List<T>, startIndex: Int, endIndex: Int, predicate: (thisElement: T, otherElement: T) -> Boolean): Int {
+       
+        val indices = startIndex.coerceAtLeast(0)..endIndex.coerceAtMost(this.size)
+
+        for (index in indices) {
+            if (other.regionMatches(0, this, index, other.size, predicate))
+                return index
+        }
+        return -1
+    }
+    
+    inline fun <T> List<T>.regionMatches(thisOffset: Int, other: List<T>, otherOffset: Int, size: Int, predicate: (thisElement: T, otherElement: T) -> Boolean): Boolean {
+            if ((otherOffset < 0) || (thisOffset < 0) || (thisOffset > this.size - size) || (otherOffset > other.size - size)) {
+                return false
+            }
+
+            for (index in 0 until size) {
+                if (!predicate(this[thisOffset + index], other[otherOffset + index]))
+                    return false
+            }
+            return true
+        }
+    
+    fun <T> Iterable<T>.collectionSizeOrDefault(default: Int): Int = if (this is Collection<*>) this.size else default
+    
+    data class HierarchicalNode<T>(
+        val data: T,
+        val hierarchyLevel: Int,
+        var parent: HierarchicalNode<T>? = null
+    )
+    /**
+     * Given a list of a hierarchical type [T], such that one [T] can be defined as the parent of another (potentially nested arbitrarily),
+     * return a list of [HierarchicalNode]s classifying the given [T]s as children and parents.
+     * For example, given a list of tasks, subtasks, sub-subtasks, etc., by defining a way to identify the level of
+     * hierarchy of a particular [T], this function can return a list of [HierarchicalNode]s representing that hierarchy.
+     * In this case, and example call could be:
+     * mutableListOf("-A","--1","--2","-B").mapToHierarchy({ it.count { it == '-' } }) { it.removePrefix("-") }
+     * */
+    fun <T, R> MutableList<T>.mapToHierarchy(
+        getHierarchicalLevel: (T) -> Int,
+        transform: (T) -> R,
+    ): List<HierarchicalNode<R>> {
+        val nodes = mutableListOf<HierarchicalNode<R>>()
+        while (isNotEmpty()) {
+            val thisElement = removeFirst()
+            val thisLevel = getHierarchicalLevel(thisElement)
+
+            val nextElement = firstOrNull()
+            val nextLevel = nextElement?.let(getHierarchicalLevel)
+
+            val parent = nodes.findLast { it.hierarchyLevel < thisLevel }
+            val thisNode = HierarchicalNode(transform(thisElement), thisLevel, parent)
+            if (parent == null) nodes.add(thisNode) //add root
+            if (nextLevel != null) {
+                when {
+                    thisLevel < nextLevel -> nodes.add(
+                        HierarchicalNode(
+                            transform(nextElement),
+                            nextLevel,
+                            thisNode
+                        )
+                    ) //moving up levels of hierarchy, add next with parent as this
+                    thisLevel > nextLevel -> nodes.add(
+                        HierarchicalNode(
+                            transform(nextElement),
+                            nextLevel,
+                            nodes.findLast { it.hierarchyLevel < nextLevel })
+                    ) //moving down levels of hierarchy, find previous parent
+                    else /*equal*/ -> nodes.add(
+                        HierarchicalNode(
+                            transform(nextElement),
+                            nextLevel,
+                            thisNode.parent
+                        )
+                    ) //same parent/level of hierarchy
+                }
+            }
+        }
+        return nodes.toList()
+    }
+
+    
+    /**
+     * Takes a [Triple] of <hour,minute,second> and returns either e.g. "05:32:15", or "5 hr 32 min 15 sec".
+     * Valid outputs: 12:34, 00:12, 00:00, 1:00:00, 1:12:00
+     * Invalid outputs: "00:00:00", "00:01:00", "1:5:3"
+     * */
+    fun Triple<Int, Int, Int>.formatted(withColons: Boolean): String {
+        fun Int.formatted() = when {
+            this == 0 -> "00"
+            this < 10 -> "0$this"
+            else -> this.toString()
+        }
+        return if (withColons) {
+            val string = when {
+                first == 0 && second > 0 -> "$second:"
+                first > 0 -> "$first:${second.formatted()}:"
+                second == 0 -> "00:"
+                else -> TODO("Should not have happened. this=$this") //how beautiful! Also deals with first == 0 && second == 0
+            }
+            string + third.formatted()
+        } else timeFormattedConcisely(first, second, third)
+    }
+
+    /**
+     * Takes an hour, minute, and second, and will return a string with only those values which are not equal to 0 (e.g. "5 hr 15 sec", "5 hr 32 min 15 sec")
+     * */
+    fun timeFormattedConcisely(hour: Int, minute: Int, second: Int): String {
+        val string = StringBuilder()
+        if (hour != 0) string.append("$hour hr ")
+        if (minute != 0) string.append("$minute min ")
+        if (second != 0) string.append("$second sec")
+        return if (string.isEmpty()) "0 sec" else string.toString().trim()
+    }
+
+    fun toSeconds(hour: Int, minute: Int, second: Int) =
+        (hour * 3600) + (minute * 60) + second
+
+    /**
+     * Converts seconds ([this]) to hours, minutes, seconds format
+     * @receiver seconds to convert
+     * @return a [Triple] of final hour, minute, second
+     * @sample (578).toHrMinSec() = (0, 9, 38)*/
+    fun Int.toHrMinSec(): Triple<Int, Int, Int> {
+        var hour = 0
+        var minute = 0
+        var second = this
+        minute += (second / 60)
+        hour += (minute / 60)
+        second %= 60
+        minute %= 60
+        return Triple(hour, minute, second)
+    }
+
+    /**
+     * Takes hours, minutes, seconds, and converts it to a [Triple] of the form <hour,minute,second>
+     * */
+    fun toHrMinSec(hour: Int = 0, minute: Int = 0, second: Int = 0): Triple<Int, Int, Int> {
+        var minute1 = minute
+        var second1 = second
+        var hour1 = hour
+        minute1 += (second1 / 60)
+        hour1 += (minute1 / 60)
+        second1 %= 60
+        minute1 %= 60
+        return Triple(hour1, minute1, second1)
+    }
+
+    
+    /**
+     * Request input from the user by first printing [firstMessageToDisplay] and then calling readLine()
+     * Loops for input until the input matches the provided [regex], printing [messageToDisplayOnError] every time the user enters an invalid input until a valid input is entered
+     * @param regex the regex to check the input against
+     * @param firstMessageToDisplay message to be displayed before input is requested; The string ": " will be appended.
+     * @param messageToDisplayOnError message to be displayed when user's input does not  match [regex]; The string ": " will be appended.
+     * @return an input from the user which matches [predicate]
+     * */
+    fun getValidatedInput(
+        regex: Regex,
+        firstMessageToDisplay: String,
+        messageToDisplayOnError: String
+    ): String? {
+        kotlin.io.print("$firstMessageToDisplay: ")
+        var input = readLine()
+        while (input?.matches(regex)
+                ?.not() == true
+        ) /*doesn't match regex (written in a roundabout way to retain nullability)*/ {
+            kotlin.io.print("$messageToDisplayOnError: ")
+            input = readLine()
+        }
+        return input
+    }
+
+    /**
+     * Request input from the user by first printing [firstMessageToDisplay] and then calling readLine()
+     * Loops for input until the input matches the provided [predicate] (i.e. the predicate returns true when passed `input`), printing [messageToDisplayOnError] every time the user enters an invalid input until a valid input is entered
+     * @param firstMessageToDisplay message to be displayed before input is requested; The string ": " will be appended.
+     * @param messageToDisplayOnError message to be displayed when user's input does not  match [predicate]; The string ": " will be appended.
+     * @param predicate function that takes the input and returns the result of predicate evaluation on the input.
+     * @return an input from the user which matches [predicate]
+     * */
+    inline fun getValidatedInput(
+        firstMessageToDisplay: String,
+        messageToDisplayOnError: String,
+        predicate: (String?) -> Boolean
+    ): String? {
+        kotlin.io.print("$firstMessageToDisplay: ")
+        var input = readLine()
+        while (!predicate(input)) /*input does not match condition dictated by predicate*/ {
+            kotlin.io.print("$messageToDisplayOnError: ")
+            input = readLine()
+        }
+        return input
+    }
+
+    /**
+     * A variation of String.indexOf() which takes a regex [Pattern] instead of a [CharSequence]
+     *  @return index of pattern in [this, or -1 if not found
+     */
+    fun String?.indexOf(pattern: Pattern): Int {
+        val matcher: Matcher = pattern.matcher(toString())
+        return if (matcher.find()) matcher.start() else -1
+    }
+
+    
+    /**
+     * <p>Finds the n-th index within a String, handling {@code null}.
+     * This method uses {@link String#indexOf(String)} if possible.</p>
+     * <p>Note that matches may overlap<p>
+     *
+     * <p>A {@code null} CharSequence will return {@code -1}.</p>
+     *
+     * @param searchStr  the CharSequence to find, may be null
+     * @param ordinal  the n-th {@code searchStr} to find, overlapping matches are allowed.
+     * @param startingFromTheEnd true if lastOrdinalIndexOf() otherwise false if ordinalIndexOf()
+     * @return the n-th index of the search CharSequence,
+     *  {@code -1} if no match or {@code null} string input for [searchStr]
+     */
+    fun String.ordinalIndexOf(searchStr: String?, ordinal: Int, startingFromTheEnd: Boolean): Int {
+        if (searchStr == null || ordinal <= 0) {
+            return -1
+        }
+        if (searchStr.isEmpty()) {
+            return if (startingFromTheEnd) this.length else 0
+        }
+        var found = 0
+        // set the initial index beyond the end of the string
+        // this is to allow for the initial index decrement/increment
+        var index = if (startingFromTheEnd) this.length else -1
+        do {
+            index = if (startingFromTheEnd) {
+                this.lastIndexOf(searchStr, index - 1) // step backwards thru string
+            } else {
+                this.indexOf(searchStr, index + 1) // step forwards through string
+            }
+            if (index < 0) {
+                return index
+            }
+            found++
+        } while (found < ordinal)
+        return index
+    }
+    
+    /**
+     * Turns a number into an ordinal string representation (e.g. 4.toOrdinalNumber()== "4th"
+     * */
+    fun Int.toOrdinalNumber(): String {
+        val suffixes = arrayOf("th", "st", "nd", "rd", "th", "th", "th", "th", "th", "th")
+        return when (this % 100) {
+            11, 12, 13 -> "${this}th"
+            else -> this.toString() + suffixes[this % 10]
+        }
+    }
+
     const val WINDOWS_DIRECTORY_REGEX = "[a-zA-Z]:\\\\(((?![<>:\"/\\\\|?*]).)+((?<![ .])\\\\)?)*"
     const val WINDOWS_FILENAME_REGEX =
         "(?!^(PRN|AUX|CLOCK$|NUL|CON|COM\\d|LPT\\d|\\..*)(\\..+)?$)[^\\x00-\\x1f\\\\<>:\"/|?*;]+"
@@ -249,126 +667,7 @@ object KotlinFunctionLibrary {
         return result
     }
 
-    /**
-     * Request input from the user by first printing [firstMessageToDisplay] and then calling readLine()
-     * Loops for input until the input matches the provided [regex], printing [messageToDisplayOnError] every time the user enters an invalid input until a valid input is entered
-     * @param regex the regex to check the input against
-     * @param firstMessageToDisplay message to be displayed before input is requested; The string ": " will be appended.
-     * @param messageToDisplayOnError message to be displayed when user's input does not  match [regex]; The string ": " will be appended.
-     * @return an input from the user which matches [predicate]
-     * */
-    fun getValidatedInput(
-        regex: Regex,
-        firstMessageToDisplay: String,
-        messageToDisplayOnError: String
-    ): String? {
-        kotlin.io.print("$firstMessageToDisplay: ")
-        var input = readLine()
-        while (input?.matches(regex)
-                ?.not() == true
-        ) /*doesn't match regex (written in a roundabout way to retain nullability)*/ {
-            kotlin.io.print("$messageToDisplayOnError: ")
-            input = readLine()
-        }
-        return input
-    }
 
-    /**
-     * Request input from the user by first printing [firstMessageToDisplay] and then calling readLine()
-     * Loops for input until the input matches the provided [predicate] (i.e. the predicate returns true when passed `input`), printing [messageToDisplayOnError] every time the user enters an invalid input until a valid input is entered
-     * @param firstMessageToDisplay message to be displayed before input is requested; The string ": " will be appended.
-     * @param messageToDisplayOnError message to be displayed when user's input does not  match [predicate]; The string ": " will be appended.
-     * @param predicate function that takes the input and returns the result of predicate evaluation on the input.
-     * @return an input from the user which matches [predicate]
-     * */
-    inline fun getValidatedInput(
-        firstMessageToDisplay: String,
-        messageToDisplayOnError: String,
-        predicate: (String?) -> Boolean
-    ): String? {
-        kotlin.io.print("$firstMessageToDisplay: ")
-        var input = readLine()
-        while (!predicate(input)) /*input does not match condition dictated by predicate*/ {
-            kotlin.io.print("$messageToDisplayOnError: ")
-            input = readLine()
-        }
-        return input
-    }
-
-    /**
-     * A variation of String.indexOf() which takes a regex [Pattern] instead of a [CharSequence]
-     *  @return index of pattern in [this, or -1 if not found
-     */
-    fun String?.indexOf(pattern: Pattern): Int {
-        val matcher: Matcher = pattern.matcher(toString())
-        return if (matcher.find()) matcher.start() else -1
-    }
-
-    /**
-     * Takes a [Triple] of <hour,minute,second> and returns either e.g. "05:32:15", or "5 hr 32 min 15 sec".
-     * Valid outputs: 12:34, 00:12, 00:00, 1:00:00, 1:12:00
-     * Invalid outputs: "00:00:00", "00:01:00", "1:5:3"
-     * */
-    fun Triple<Int, Int, Int>.formatted(withColons: Boolean): String {
-        fun Int.formatted() = when {
-            this == 0 -> "00"
-            this < 10 -> "0$this"
-            else -> this.toString()
-        }
-        return if (withColons) {
-            val string = when {
-                first == 0 && second > 0 -> "$second:"
-                first > 0 -> "$first:${second.formatted()}:"
-                second == 0 -> "00:"
-                else -> TODO("Should not have happened. this=$this") //how beautiful! Also deals with first == 0 && second == 0
-            }
-            string + third.formatted()
-        } else timeFormattedConcisely(first, second, third)
-    }
-
-    /**
-     * Takes an hour, minute, and second, and will return a string with only those values which are not equal to 0 (e.g. "5 hr 15 sec", "5 hr 32 min 15 sec")
-     * */
-    fun timeFormattedConcisely(hour: Int, minute: Int, second: Int): String {
-        val string = StringBuilder()
-        if (hour != 0) string.append("$hour hr ")
-        if (minute != 0) string.append("$minute min ")
-        if (second != 0) string.append("$second sec")
-        return if (string.isEmpty()) "0 sec" else string.toString().trim()
-    }
-
-    fun toSeconds(hour: Int, minute: Int, second: Int) =
-        (hour * 3600) + (minute * 60) + second
-
-    /**
-     * Converts seconds ([this]) to hours, minutes, seconds format
-     * @receiver seconds to convert
-     * @return a [Triple] of final hour, minute, second
-     * @sample (578).toHrMinSec() = (0, 9, 38)*/
-    fun Int.toHrMinSec(): Triple<Int, Int, Int> {
-        var hour = 0
-        var minute = 0
-        var second = this
-        minute += (second / 60)
-        hour += (minute / 60)
-        second %= 60
-        minute %= 60
-        return Triple(hour, minute, second)
-    }
-
-    /**
-     * Takes hours, minutes, seconds, and converts it to a [Triple] of the form <hour,minute,second>
-     * */
-    fun toHrMinSec(hour: Int = 0, minute: Int = 0, second: Int = 0): Triple<Int, Int, Int> {
-        var minute1 = minute
-        var second1 = second
-        var hour1 = hour
-        minute1 += (second1 / 60)
-        hour1 += (minute1 / 60)
-        second1 %= 60
-        minute1 %= 60
-        return Triple(hour1, minute1, second1)
-    }
     /**
      * Mutates the reciever list to exactly match [other]. Does not take into account whether contents are identical but have moved,
      * nor whether a region of the lists are matching, but one is missing the contents of another, and just overrides all of the rest
@@ -444,43 +743,6 @@ println("workingList2=$workingList2")*/
         }
     }
 
-    /**
-     * <p>Finds the n-th index within a String, handling {@code null}.
-     * This method uses {@link String#indexOf(String)} if possible.</p>
-     * <p>Note that matches may overlap<p>
-     *
-     * <p>A {@code null} CharSequence will return {@code -1}.</p>
-     *
-     * @param searchStr  the CharSequence to find, may be null
-     * @param ordinal  the n-th {@code searchStr} to find, overlapping matches are allowed.
-     * @param startingFromTheEnd true if lastOrdinalIndexOf() otherwise false if ordinalIndexOf()
-     * @return the n-th index of the search CharSequence,
-     *  {@code -1} if no match or {@code null} string input for [searchStr]
-     */
-    fun String.ordinalIndexOf(searchStr: String?, ordinal: Int, startingFromTheEnd: Boolean): Int {
-        if (searchStr == null || ordinal <= 0) {
-            return -1
-        }
-        if (searchStr.isEmpty()) {
-            return if (startingFromTheEnd) this.length else 0
-        }
-        var found = 0
-        // set the initial index beyond the end of the string
-        // this is to allow for the initial index decrement/increment
-        var index = if (startingFromTheEnd) this.length else -1
-        do {
-            index = if (startingFromTheEnd) {
-                this.lastIndexOf(searchStr, index - 1) // step backwards thru string
-            } else {
-                this.indexOf(searchStr, index + 1) // step forwards through string
-            }
-            if (index < 0) {
-                return index
-            }
-            found++
-        } while (found < ordinal)
-        return index
-    }
 
     /**
      * Checks whether a string is an instance of an enum
@@ -615,8 +877,7 @@ println("workingList2=$workingList2")*/
     
     /**
      * Appends [append] to [this] if [predicate] returns true when passed [this]
-     * Use case:                 it.appendLine("High-risk demographic: ".appendIf("Male(${first.ageRange.first}-${first.ageRange.last})") { demographics.size == 1 }.appendIf("Female(${first.ageRange.first}-${first.ageRange.last}") { demographics.size == 2 } )
-
+     * Use case: "Item".appendIf("s") { items.size > 1 }
      * */
     inline fun String.appendIf(append: String, predicate: (String) -> Boolean): String {
         return if (predicate(this)) this + append else this
@@ -624,20 +885,19 @@ println("workingList2=$workingList2")*/
 
     /**
      * Appends [append] to [this] if [predicate] returns true when passed [this], otherwise appends [else]
-     * Use case:                 it.appendLine("High-risk demographic: ".appendIf("Male(${first.ageRange.first}-${first.ageRange.last})","N\\A") { demographics.size == 1 }.appendIf("Female(${first.ageRange.first}-${first.ageRange.last}") { demographics.size == 2 } )
-
+     * Use case: "He likes to eat ".appendIf("apples", "an apple") { apples.size > 1 } 
      * */
     inline fun String.appendIf(append: String, `else`: String, predicate: (String) -> Boolean): String {
         return if (predicate(this)) this + append else this + `else`
     }
 
-    inline fun <T> myBuildList(capacity: Int, action: () -> T): List<T> {
+    inline fun <T> buildList(capacity: Int, action: () -> T): List<T> {
         val list = mutableListOf<T>()
         for (i in 0 until capacity) list.add(action())
         return list.toList()
     }
 
-    inline fun <T> myBuildMutableList(capacity: Int, action: () -> T): MutableList<T> {
+    inline fun <T> buildMutableList(capacity: Int, action: () -> T): MutableList<T> {
         val list = mutableListOf<T>()
         for (i in 0 until capacity) list.add(action())
         return list
@@ -672,7 +932,7 @@ println("workingList2=$workingList2")*/
      * @return Triple<string in-between, first index, second index>
      *     The return is this strange data structure because it was created out of the need for the following use case:
      *     I was reading a string which had a number of substrings i had to parse into objects, and I wanted to save
-     *     the index of the end of the first substring so that i could use it for the beggining of the next substring,
+     *     the index of the end of the first substring so that i could use it for the beginning of the next substring,
      *     eliminating the need to find the index again. The flow of calls to substring() were intended to start with
      *     this function and then continue with {@link #substring(Int, String)}
      * */
@@ -816,95 +1076,6 @@ println("workingList2=$workingList2")*/
     }
 
     /**
-     * Turns a number into an ordinal string representation (e.g. 4.toOrdinalNumber()== "4th"
-     * */
-    fun Int.toOrdinalNumber(): String {
-        val suffixes = arrayOf("th", "st", "nd", "rd", "th", "th", "th", "th", "th", "th")
-        return when (this % 100) {
-            11, 12, 13 -> "${this}th"
-            else -> this.toString() + suffixes[this % 10]
-        }
-    }
-
-    /**
-     * A version of List.find() for recursive data structures. Recurses through a list of a recursive elements to find the element which matches [predicate] by selecting the next list using [recursiveSelector]
-     * For example, given class Foo(val a: Char, val b: List<Foo>)
-     * val list = listOf(
-    Foo('a',
-    listOf(
-    Foo('b',
-    listOf(
-    Foo('c',
-    listOf()
-    )
-    )
-    ),
-    Foo('d',
-    listOf(
-    Foo('e',
-    listOf(
-    Foo('f',
-    listOf()
-    )
-    )
-    )
-    )
-    )
-    )
-    )
-    )
-    list.recursiveFind({ it.a == 'z' }) { it.b } != null == false
-    list.recursiveFind({ it.a == 'a' }) { it.b } != null == true
-    list.recursiveFind({ it.a == 'f' }) { it.b } != null == true
-     * */
-    fun <E> List<E>.recursiveFind(predicate: (E) -> Boolean, recursiveSelector: (E) -> List<E>): E? {
-        if (isEmpty()) return null
-        for (element in this) {
-            return if (predicate(element)) element else /*check the next layer*/ recursiveSelector(element).recursiveFind(
-                predicate,
-                recursiveSelector
-            ) ?: continue
-        }
-        return null
-    }
-    fun <E> List<E>.recursiveForEach(action: (E) -> Unit, recursiveSelector: (E) -> List<E>): Unit {
-        if (isEmpty()) return
-        for (element in this) {
-            action(element) 
-            recursiveSelector(element).recursiveForEach(
-                action,
-                recursiveSelector
-            )
-      }
-    }
-    
-    /**
-     * Returns index of the first element after [offset] matching the given [predicate], or -1 if the list does not contain such element.
-     */
-    public inline fun <T> List<T>.indexOf(predicate: (T) -> Boolean, offset: Int): Int {
-        var index = 0
-        for (item in this.subList(offset, this.size)) {
-            if (predicate(item))
-                return index
-            index++
-        }
-        return -1
-    }
-    
-    fun <T> List<T>.indexOf(element: T, startIndex: Int): Int? {
-        for (i in startIndex until this.size) { //TODO use subList()?
-            if (this[i] == element) return i
-        }
-        return null
-    }
-
-    fun <T> Iterable<T>.toFrequencyMap(): Map<T, Int> {
-        val frequencies: MutableMap<T, Int> = mutableMapOf()
-        this.forEach { frequencies[it] = frequencies.getOrDefault(it, 0) + 1 }
-        return frequencies
-    }
-
-    /**
      * Returns a list which contains a copy of [this] [n] times: e.g. listOf(1,2,3).multiplyBy(3){it+1} == listOf(1,2,3, 2,3,4, 2,3,4)
      * */
     inline fun <E> MutableList<E>.multiplyListBy(n: Int, transform: (E) -> E): MutableList<E> {
@@ -920,169 +1091,6 @@ println("workingList2=$workingList2")*/
      * */
     inline fun <T, R> Iterable<T>.findBy(key: R, selector: (T) -> R): T? = find { selector(it) == key }
         
-    /**
-     * Returns a list of snapshots of windows whose every element returns true for
-     * [predicate](window, element) (meaning that every window matches the predicate).
-     * @see windowedByMaxLength
-     */
-    fun <T> Iterable<T>.windowedBy(predicate: (window: List<T>, element: T) -> Boolean): List<List<T>> {
-        val result = mutableListOf<List<T>>()
-        val copy = ArrayDeque(toList())
-        while (copy.isNotEmpty()) {
-            val window = mutableListOf<T>()
-            var first = copy.firstOrNull()
-            while (first != null && predicate(window, first)) {
-                window.add(first)
-                copy.removeFirst()
-                first = copy.firstOrNull()
-            }
-            result.add(window)
-        }
-        return result
-    }
-    /**
-     * Returns a list of windows, where each window's length (as defined by [getElementLength]) is at most [maxLength].
-     */
-    fun <T> Iterable<T>.windowedByMaxLength(maxLength: Int, getElementLength: (T) -> Int): List<List<T>> {
-        var currentSumOfLengths = 0
-        return windowedBy { window, element ->
-            val newLength = currentSumOfLengths + getElementLength(element)
-            val sameWindow = newLength < maxLength
-            currentSumOfLengths = if(sameWindow) newLength else 0
-            sameWindow
-        }
-    }
-    /**
-     * Returns a list of windows, where every window's string's lengths add to at most [maxLength].
-     * For example, ["a", "b", "c", "d"].windowedByMaxLength(2) == [[a,b], [c,d]]
-     */
-    fun Iterable<CharSequence>.windowedByMaxLength(maxLength: Int) = windowedByMaxLength(maxLength) { it.length }
-    /**
-     * Splits a list by a predicate. List analog to [String.split]
-     */
-    fun <E> List<E>.split(includeDelimiter: Boolean = false, predicate: (E) -> Boolean): List<List<E>> {
-        return flatMapIndexed { index, element ->
-                when {
-                    index == 0 || index == lastIndex -> listOf(index)
-                    predicate(element) -> listOf(index - 1, index + 1)
-                    else -> emptyList()
-                }
-            }
-            .windowed(size = 2, step = 2) { (from, to) -> slice( (if(includeDelimiter) (from - 1).coerceAtLeast(0) else from)..to) }
-    }
-    
-    /**
-    * Determines whether [this] list contains a sublist such that at least one element in each list of said sublist is contained in a parallel sublist of [other].
-    * This is a direct adaptation of [CharSequence.contains(CharSequence)].
-    * For example the following returns true:
-    * val x = listOf(                       listOf('a', 'b', 'c'), listOf('d', 'e', 'f')             )
-    * val y = listOf(listOf('x' ,'y' ,'z'), listOf('1', '2', 'a'), listOf('3', 'f', '4'), listOf('9'))
-    * val z = listOf(                       listOf('1', '2', 'a'), listOf('3', 'f', '4')             )
-    * println(x in y) //prints true
-    * println(x in z) //prints true
-    */
-    operator fun <T> List<Iterable<T>>.contains(other: List<Iterable<T>>): Boolean = contains(other) { thisList, otherList -> thisList.any { it in otherList } }
-        
-    fun <T> List<T>.contains(other: List<T>, predicate: (thisElement: T, otherElement: T) -> Boolean): Boolean = indexOf(other, 0, this.size, predicate) >= 0
-
-    fun <T> List<T>.indexOf(other: List<T>, startIndex: Int, endIndex: Int, predicate: (thisElement: T, otherElement: T) -> Boolean): Int {
-       
-        val indices = startIndex.coerceAtLeast(0)..endIndex.coerceAtMost(this.size)
-
-        for (index in indices) {
-            if (other.regionMatches(0, this, index, other.size, predicate))
-                return index
-        }
-        return -1
-    }
-    
-    inline fun <T> List<T>.regionMatches(thisOffset: Int, other: List<T>, otherOffset: Int, size: Int, predicate: (thisElement: T, otherElement: T) -> Boolean): Boolean {
-            if ((otherOffset < 0) || (thisOffset < 0) || (thisOffset > this.size - size) || (otherOffset > other.size - size)) {
-                return false
-            }
-
-            for (index in 0 until size) {
-                if (!predicate(this[thisOffset + index], other[otherOffset + index]))
-                    return false
-            }
-            return true
-        }
-    
-    fun <T> Iterable<T>.collectionSizeOrDefault(default: Int): Int = if (this is Collection<*>) this.size else default
-    
-    fun <E, R> Iterable<E>.recursiveMap(
-        transform: (E) -> R,
-        recursiveSelector: (E) -> Iterable<E>
-    ): List<R> = recursiveMapTo(ArrayList(collectionSizeOrDefault(10)), transform, recursiveSelector)
-
-    fun <T, R, C: MutableCollection<in R>> Iterable<T>.recursiveMapTo(
-        destination: C,
-        transform: (T) -> R,
-        recursiveSelector: (T) -> Iterable<T>
-    ): C {
-        for (element in this) {
-            destination.add(transform(element))
-            recursiveSelector(element).recursiveMapTo(destination, transform, recursiveSelector) //transform children
-        }
-        return destination
-    }
-    
-    data class HierarchicalNode<T>(
-        val data: T,
-        val hierarchyLevel: Int,
-        var parent: HierarchicalNode<T>? = null
-    )
-    /**
-     * Given a list of a hierarchical type [T], such that one [T] can be defined as the parent of another (potentially nested arbitrarily),
-     * return a list of [HierarchicalNode]s classifying the given [T]s as children and parents.
-     * For example, given a list of tasks, subtasks, sub-subtasks, etc., by defining a way to identify the level of
-     * hierarchy of a particular [T], this function can return a list of [HierarchicalNode]s representing that hierarchy.
-     * In this case, and example call could be:
-     * mutableListOf("-A","--1","--2","-B").mapToHierarchy({ it.count { it == '-' } }) { it.removePrefix("-") }
-     * */
-    fun <T, R> MutableList<T>.mapToHierarchy(
-        getHierarchicalLevel: (T) -> Int,
-        transform: (T) -> R,
-    ): List<HierarchicalNode<R>> {
-        val nodes = mutableListOf<HierarchicalNode<R>>()
-        while (isNotEmpty()) {
-            val thisElement = removeFirst()
-            val thisLevel = getHierarchicalLevel(thisElement)
-
-            val nextElement = firstOrNull()
-            val nextLevel = nextElement?.let(getHierarchicalLevel)
-
-            val parent = nodes.findLast { it.hierarchyLevel < thisLevel }
-            val thisNode = HierarchicalNode(transform(thisElement), thisLevel, parent)
-            if (parent == null) nodes.add(thisNode) //add root
-            if (nextLevel != null) {
-                when {
-                    thisLevel < nextLevel -> nodes.add(
-                        HierarchicalNode(
-                            transform(nextElement),
-                            nextLevel,
-                            thisNode
-                        )
-                    ) //moving up levels of hierarchy, add next with parent as this
-                    thisLevel > nextLevel -> nodes.add(
-                        HierarchicalNode(
-                            transform(nextElement),
-                            nextLevel,
-                            nodes.findLast { it.hierarchyLevel < nextLevel })
-                    ) //moving down levels of hierarchy, find previous parent
-                    else /*equal*/ -> nodes.add(
-                        HierarchicalNode(
-                            transform(nextElement),
-                            nextLevel,
-                            thisNode.parent
-                        )
-                    ) //same parent/level of hierarchy
-                }
-            }
-        }
-        return nodes.toList()
-    }
-
     /**
      * A `val foo by lazy {}` alternative that supports vars, viz. `var foo = by LazyMutable {}`
      * */
@@ -1165,12 +1173,14 @@ println("workingList2=$workingList2")*/
         ZippingIterable(this.iterator(), other.iterator())
     fun <A, B> Iterable<A>.with(other: Iterable<B>, offset: Int, applyOffsetToFirstIterable: Boolean = true, applyOffsetToSecondIterable: Boolean = true): ZippingIterableWithOffset<A, B> =
         ZippingIterableWithOffset(this.iterator(), other.iterator(), offset, applyOffsetToFirstIterable,  applyOffsetToSecondIterable)
-        
+
+    // Aliases to [with]:
     fun <A, B> Iterable<A>.zipLazy(other: Iterable<B>): ZippingIterable<A, B> = this.with(other)
-    fun <A, B> Iterable<A>.zipLazy(other: Iterable<B>, offset: Int, applyOffsetToFirstIterable: Boolean = true, applyOffsetToSecondIterable: Boolean = true): ZippingIterableWithOffset<A, B> = this.with(other, offset, applyOffsetToFirstIterable, applyOffsetToSecondIterable)
-        
     fun <A, B> Iterable<A>.zipWithLazy(other: Iterable<B>): ZippingIterable<A, B> = this.with(other)
-    fun <A, B> Iterable<A>.zipWithLazy(other: Iterable<B>, offset: Int, applyOffsetToFirstIterable: Boolean = true, applyOffsetToSecondIterable: Boolean = true): ZippingIterableWithOffset<A, B> = this.with(other, offset, applyOffsetToFirstIterable, applyOffsetToSecondIterable)
+    fun <A, B> Iterable<A>.zipLazy(other: Iterable<B>, offset: Int, applyOffsetToFirstIterable: Boolean = true, applyOffsetToSecondIterable: Boolean = true): ZippingIterableWithOffset<A, B> = 
+        this.with(other, offset, applyOffsetToFirstIterable, applyOffsetToSecondIterable)
+    fun <A, B> Iterable<A>.zipWithLazy(other: Iterable<B>, offset: Int, applyOffsetToFirstIterable: Boolean = true, applyOffsetToSecondIterable: Boolean = true): ZippingIterableWithOffset<A, B> = 
+        this.with(other, offset, applyOffsetToFirstIterable, applyOffsetToSecondIterable)
         
     @JvmStatic
     fun main(args: Array<String>) {
