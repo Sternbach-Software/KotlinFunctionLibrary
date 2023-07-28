@@ -1184,6 +1184,6 @@ println("workingList2=$workingList2")*/
         
     @JvmStatic
     fun main(args: Array<String>) {
-        println("KotlinFunctionLibrary v4.1.0")
+        println("KotlinFunctionLibrary v5.0.0")
     }
 }
