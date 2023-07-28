@@ -25,6 +25,71 @@ import SortingDelegate.sort as sortFromDelegate
 @Suppress("UNUSED")
 object KotlinFunctionLibrary {
 
+    /**
+     * Takes a [Triple] of <hour,minute,second> and returns either e.g. "05:32:15", or "5 hr 32 min 15 sec".
+     * Valid outputs: 12:34, 00:12, 00:00, 1:00:00, 1:12:00
+     * Invalid outputs: "00:00:00", "00:01:00", "1:5:3"
+     * */
+    fun Triple<Int, Int, Int>.formatted(withColons: Boolean): String {
+        fun Int.formatted() = when {
+            this == 0 -> "00"
+            this < 10 -> "0$this"
+            else -> this.toString()
+        }
+        return if (withColons) {
+            val string = when {
+                first == 0 && second > 0 -> "$second:"
+                first > 0 -> "$first:${second.formatted()}:"
+                second == 0 -> "00:"
+                else -> TODO("Should not have happened. this=$this") //how beautiful! Also deals with first == 0 && second == 0
+            }
+            string + third.formatted()
+        } else timeFormattedConcisely(first, second, third)
+    }
+
+    /**
+     * Takes an hour, minute, and second, and will return a string with only those values which are not equal to 0 (e.g. "5 hr 15 sec", "5 hr 32 min 15 sec")
+     * */
+    fun timeFormattedConcisely(hour: Int, minute: Int, second: Int): String {
+        val string = StringBuilder()
+        if (hour != 0) string.append("$hour hr ")
+        if (minute != 0) string.append("$minute min ")
+        if (second != 0) string.append("$second sec")
+        return if (string.isEmpty()) "0 sec" else string.toString().trim()
+    }
+
+    fun toSeconds(hour: Int, minute: Int, second: Int) =
+        (hour * 3600) + (minute * 60) + second
+
+    /**
+     * Converts seconds ([this]) to hours, minutes, seconds format
+     * @receiver seconds to convert
+     * @return a [Triple] of final hour, minute, second
+     * @sample (578).toHrMinSec() = (0, 9, 38)*/
+    fun Int.toHrMinSec(): Triple<Int, Int, Int> {
+        var hour = 0
+        var minute = 0
+        var second = this
+        minute += (second / 60)
+        hour += (minute / 60)
+        second %= 60
+        minute %= 60
+        return Triple(hour, minute, second)
+    }
+
+    /**
+     * Takes hours, minutes, seconds, and converts it to a [Triple] of the form <hour,minute,second>
+     * */
+    fun toHrMinSec(hour: Int = 0, minute: Int = 0, second: Int = 0): Triple<Int, Int, Int> {
+        var minute1 = minute
+        var second1 = second
+        var hour1 = hour
+        minute1 += (second1 / 60)
+        hour1 += (minute1 / 60)
+        second1 %= 60
+        minute1 %= 60
+        return Triple(hour1, minute1, second1)
+    }
 
     /**
      * A version of List.find() for recursive data structures. Recurses through a list of a recursive elements to find the element which matches [predicate] by selecting the next list using [recursiveSelector]
@@ -268,74 +333,6 @@ object KotlinFunctionLibrary {
         }
         return nodes.toList()
     }
-
-    
-    /**
-     * Takes a [Triple] of <hour,minute,second> and returns either e.g. "05:32:15", or "5 hr 32 min 15 sec".
-     * Valid outputs: 12:34, 00:12, 00:00, 1:00:00, 1:12:00
-     * Invalid outputs: "00:00:00", "00:01:00", "1:5:3"
-     * */
-    fun Triple<Int, Int, Int>.formatted(withColons: Boolean): String {
-        fun Int.formatted() = when {
-            this == 0 -> "00"
-            this < 10 -> "0$this"
-            else -> this.toString()
-        }
-        return if (withColons) {
-            val string = when {
-                first == 0 && second > 0 -> "$second:"
-                first > 0 -> "$first:${second.formatted()}:"
-                second == 0 -> "00:"
-                else -> TODO("Should not have happened. this=$this") //how beautiful! Also deals with first == 0 && second == 0
-            }
-            string + third.formatted()
-        } else timeFormattedConcisely(first, second, third)
-    }
-
-    /**
-     * Takes an hour, minute, and second, and will return a string with only those values which are not equal to 0 (e.g. "5 hr 15 sec", "5 hr 32 min 15 sec")
-     * */
-    fun timeFormattedConcisely(hour: Int, minute: Int, second: Int): String {
-        val string = StringBuilder()
-        if (hour != 0) string.append("$hour hr ")
-        if (minute != 0) string.append("$minute min ")
-        if (second != 0) string.append("$second sec")
-        return if (string.isEmpty()) "0 sec" else string.toString().trim()
-    }
-
-    fun toSeconds(hour: Int, minute: Int, second: Int) =
-        (hour * 3600) + (minute * 60) + second
-
-    /**
-     * Converts seconds ([this]) to hours, minutes, seconds format
-     * @receiver seconds to convert
-     * @return a [Triple] of final hour, minute, second
-     * @sample (578).toHrMinSec() = (0, 9, 38)*/
-    fun Int.toHrMinSec(): Triple<Int, Int, Int> {
-        var hour = 0
-        var minute = 0
-        var second = this
-        minute += (second / 60)
-        hour += (minute / 60)
-        second %= 60
-        minute %= 60
-        return Triple(hour, minute, second)
-    }
-
-    /**
-     * Takes hours, minutes, seconds, and converts it to a [Triple] of the form <hour,minute,second>
-     * */
-    fun toHrMinSec(hour: Int = 0, minute: Int = 0, second: Int = 0): Triple<Int, Int, Int> {
-        var minute1 = minute
-        var second1 = second
-        var hour1 = hour
-        minute1 += (second1 / 60)
-        hour1 += (minute1 / 60)
-        second1 %= 60
-        minute1 %= 60
-        return Triple(hour1, minute1, second1)
-    }
-
     
     /**
      * Request input from the user by first printing [firstMessageToDisplay] and then calling readLine()
@@ -433,6 +430,7 @@ object KotlinFunctionLibrary {
     
     /**
      * Turns a number into an ordinal string representation (e.g. 4.toOrdinalNumber()== "4th"
+     * Based on https://stackoverflow.com/a/6810409/12528345
      * */
     fun Int.toOrdinalNumber(): String {
         val suffixes = arrayOf("th", "st", "nd", "rd", "th", "th", "th", "th", "th", "th")
