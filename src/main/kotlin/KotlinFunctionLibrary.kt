@@ -278,10 +278,10 @@ object KotlinFunctionLibrary {
     
     fun <T> Iterable<T>.collectionSizeOrDefault(default: Int): Int = if (this is Collection<*>) this.size else default
     
-    data class HierarchicalNode<T>(
+    data class HierarchicalNode<T, C: Comparable<C>>(
         val data: T,
-        val hierarchyLevel: Int,
-        var parent: HierarchicalNode<T>? = null
+        val hierarchyLevel: C,
+        var parent: HierarchicalNode<T, C>? = null
     )
     /**
      * Given a list of a hierarchical type [T], such that one [T] can be defined as the parent of another (potentially nested arbitrarily),
@@ -291,10 +291,10 @@ object KotlinFunctionLibrary {
      * In this case, and example call could be:
      * mutableListOf("-A","--1","--2","-B").mapToHierarchy({ it.count { it == '-' } }) { it.removePrefix("-") }
      * */
-    fun <T, R> MutableList<T>.mapToHierarchy(
-        getHierarchicalLevel: (T) -> Int,
+    fun <T, R, C: Comparable<C>> MutableList<T>.mapToHierarchy(
+        getHierarchicalLevel: (T) -> C,
         transform: (T) -> R,
-    ): List<HierarchicalNode<R>> {
+    ): List<HierarchicalNode<R, C>> {
         val nodes = mutableListOf<HierarchicalNode<R>>()
         while (isNotEmpty()) {
             val thisElement = removeFirst()
