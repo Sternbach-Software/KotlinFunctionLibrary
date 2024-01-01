@@ -185,6 +185,7 @@ object KotlinFunctionLibrary {
         this.forEach { frequencies[it] = frequencies.getOrDefault(it, 0) + 1 }
         return frequencies
     }
+        
     /**
      * Returns a list of snapshots of windows whose every element returns true for
      * [predicate](window, element) (meaning that every window matches the predicate).
@@ -196,48 +197,43 @@ object KotlinFunctionLibrary {
     fun <T> Iterable<T>.windowedBy(predicate: (window: List<T>, element: T) -> Boolean): List<List<T>> {
         val result = mutableListOf<List<T>>()
         val copy = ArrayDeque(toList())
+        val window = mutableListOf<T>()
         while (copy.isNotEmpty()) {
-            val window = mutableListOf<T>()
-            var first = copy.firstOrNull()
-            while (first != null && predicate(window, first)) {
-                window.add(first)
-                copy.removeFirst()
-                first = copy.firstOrNull()
+            val current = copy.removeFirst()
+            if(predicate(window, current)) { //is part of this window
+                window.add(current)
             }
-            result.add(window)
+            else { //new window
+                result.add(window.toList())
+                window.clear()
+                window.add(current)
+            }
         }
+        result.add(window.toList()) //add last window
         return result
     }
+    
     /**
      * Returns a list of windows, where each window's length (as defined by [getElementLength]) is at most [maxLength].
+     * If an element's length is greater than [maxLength], it will be in its own window.
      */
     fun <T> Iterable<T>.windowedByMaxLength(maxLength: Int, getElementLength: (T) -> Int): List<List<T>> {
         var currentSumOfLengths = 0
         return windowedBy { window, element ->
-            val newLength = currentSumOfLengths + getElementLength(element)
-            val sameWindow = newLength < maxLength
-            currentSumOfLengths = if(sameWindow) newLength else 0
+            val elementLength = getElementLength(element)
+            val newLength = currentSumOfLengths + elementLength
+            val sameWindow = newLength <= maxLength
+            currentSumOfLengths = if(sameWindow) newLength else elementLength/*new element is only element in new window*/
             sameWindow
         }
     }
+    
     /**
      * Returns a list of windows, where every window's string's lengths add to at most [maxLength].
-     * For example, ["a", "b", "c", "d"].windowedByMaxLength(2) == [[a,b], [c,d]]
+     * For example, ["a", "b", "cd", "e"].windowedByMaxLength(2) == [["a","b"], ["cd"], "e"]
+     * If an element's length is greater than [maxLength], it will be in its own window.
      */
     fun Iterable<CharSequence>.windowedByMaxLength(maxLength: Int) = windowedByMaxLength(maxLength) { it.length }
-    /**
-     * Splits a list by a predicate. List analog to [String.split]
-     */
-    fun <E> List<E>.split(includeDelimiter: Boolean = false, predicate: (E) -> Boolean): List<List<E>> {
-        return flatMapIndexed { index, element ->
-                when {
-                    index == 0 || index == lastIndex -> listOf(index)
-                    predicate(element) -> listOf(index - 1, index + 1)
-                    else -> emptyList()
-                }
-            }
-            .windowed(size = 2, step = 2) { (from, to) -> slice( (if(includeDelimiter) (from - 1).coerceAtLeast(0) else from)..to) }
-    }
     
     /**
     * Determines whether [this] list contains a sublist such that at least one element in each list of said sublist is contained in a parallel sublist of [other].
