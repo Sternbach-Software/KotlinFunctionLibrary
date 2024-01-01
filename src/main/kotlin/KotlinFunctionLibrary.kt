@@ -194,22 +194,22 @@ object KotlinFunctionLibrary {
      * where each group's strings' lengths adds up to no more than a number n.
      * @see windowedByMaxLength
      */
-    fun <T> Iterable<T>.windowedBy(predicate: (window: List<T>, element: T) -> Boolean): List<List<T>> {
+     fun <T> Iterable<T>.windowedBy(predicate: (window: List<T>, element: T) -> Boolean): List<List<T>> {
         val result = mutableListOf<List<T>>()
-        val copy = ArrayDeque(toList())
         val window = mutableListOf<T>()
-        while (copy.isNotEmpty()) {
-            val current = copy.removeFirst()
-            if(predicate(window, current)) { //is part of this window
-                window.add(current)
-            }
-            else { //new window
+    
+        for (element in this) {
+            if (window.isNotEmpty() && !predicate(window, element)) {
                 result.add(window.toList())
                 window.clear()
-                window.add(current)
             }
+            window.add(element)
         }
-        result.add(window.toList()) //add last window
+    
+        if (window.isNotEmpty()) {
+            result.add(window.toList())
+        }
+    
         return result
     }
     
